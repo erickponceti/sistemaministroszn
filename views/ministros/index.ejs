@@ -1,0 +1,416 @@
+<%- include('../partials/header') %>
+
+<!-- Barra de busca + botao novo -->
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+  <div style="flex:1;min-width:260px;position:relative">
+    <i class="fas fa-search" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#b0bac9;font-size:14px;pointer-events:none"></i>
+    <input type="text" id="busca-ministro" class="form-control"
+      placeholder="Buscar ministro pelo nome..."
+      style="padding-left:42px;font-size:14px"
+      oninput="buscar(this.value)"
+      autocomplete="off">
+  </div>
+  <div id="contador-busca" style="font-size:13px;color:var(--text-light);white-space:nowrap"></div>
+  <% if (ministros.length > 0) { %>
+  <button type="button" class="btn btn-outline" onclick="exportarExcel()" title="Exportar todos os ministros para Excel">
+    <i class="fas fa-file-excel" style="color:#217346"></i> Excel
+  </button>
+  <% } %>
+  <a href="/ministros/novo" class="btn btn-primary"><i class="fas fa-plus"></i> Novo Ministro</a>
+</div>
+
+<%
+var chamadoClass = {
+  'Apostolo':'apostolo','Apóstolo':'apostolo',
+  'Evangelista':'evangelista','Pastor':'pastor',
+  'Mestre':'mestre','Profeta':'profeta'
+};
+%>
+
+<% if (ministros.length === 0) { %>
+  <div class="card">
+    <div class="empty-state">
+      <i class="fas fa-user-tie"></i>
+      <p>Nenhum ministro cadastrado ainda.</p>
+      <a href="/ministros/novo" class="btn btn-primary" style="margin-top:16px">
+        <i class="fas fa-plus"></i> Cadastrar Ministro
+      </a>
+    </div>
+  </div>
+<% } else { %>
+
+<div class="card" style="padding:0">
+  <div class="table-wrapper">
+    <table id="tabela-ministros">
+      <thead>
+        <tr>
+          <th style="width:36px">#</th>
+          <th>Nome</th>
+          <th>Chamado(s)</th>
+          <th>Ordenacao</th>
+          <th>Tipo</th>
+          <th>Igreja</th>
+          <th>Telefone</th>
+          <th style="text-align:right">Acoes</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-ministros">
+        <% for (var i = 0; i < ministros.length; i++) {
+          var m = ministros[i];
+          var chamados = Array.isArray(m.chamados) ? m.chamados : [];
+          var nomeLower = m.nome.toLowerCase();
+        %>
+        <tr class="tr-ministro" data-nome="<%= nomeLower %>" data-id="<%= m.id %>">
+          <td class="td-num" style="color:var(--text-light);font-size:12px"><%= i + 1 %></td>
+
+          <td class="td-nome" style="font-weight:700;font-size:14px;min-width:180px"><%= m.nome %></td>
+
+          <td>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">
+              <% if (chamados.length === 0) { %>
+                <span style="color:var(--text-light);font-size:12px;font-style:italic">-</span>
+              <% } %>
+              <% for (var j = 0; j < chamados.length; j++) { %>
+                <span class="badge badge-<%= chamadoClass[chamados[j]] || 'pastor' %>"><%= chamados[j] %></span>
+              <% } %>
+            </div>
+          </td>
+
+          <td>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">
+              <% if (m.licenciado) { %>
+                <span style="display:inline-flex;align-items:center;gap:4px;background:#fff3e0;color:#e65100;border-radius:20px;padding:3px 9px;font-size:11px;font-weight:700">
+                  <i class="fas fa-id-badge"></i> Licenciado
+                </span>
+              <% } %>
+              <% if (m.ordenado) { %>
+                <span style="display:inline-flex;align-items:center;gap:4px;background:#e8f5e9;color:#1b5e20;border-radius:20px;padding:3px 9px;font-size:11px;font-weight:700">
+                  <i class="fas fa-certificate"></i> Ordenado
+                </span>
+              <% } %>
+              <% if (!m.licenciado && !m.ordenado) { %>
+                <span style="color:var(--text-light);font-size:12px">-</span>
+              <% } %>
+            </div>
+          </td>
+
+          <td>
+            <% if (m.convidado) { %>
+              <span style="display:inline-flex;align-items:center;gap:5px;background:#fff3e0;color:#e65100;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">
+                <i class="fas fa-plane-arrival"></i> Convidado
+              </span>
+            <% } else { %>
+              <span style="display:inline-flex;align-items:center;gap:5px;background:#e8f5e9;color:#1b5e20;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">
+                <i class="fas fa-home"></i> Membro
+              </span>
+            <% } %>
+          </td>
+
+          <td style="color:var(--text-mid);font-size:13px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            <% if (m.convidado) { %>
+              <span style="color:var(--text-light);font-style:italic">Visitante</span>
+            <% } else { %>
+              <%= m.nome_igreja ? m.nome_igreja : '-' %>
+            <% } %>
+          </td>
+
+          <td>
+            <% if (m.telefone) { %>
+              <a href="https://t.me/+55<%= m.telefone.replace(/\D/g,'') %>" target="_blank"
+                style="display:inline-flex;align-items:center;gap:5px;color:#0088cc;font-size:13px;font-weight:700;text-decoration:none">
+                <i class="fab fa-telegram-plane" style="font-size:15px"></i>
+                <%= m.telefone %>
+              </a>
+            <% } else { %>
+              <span style="color:var(--text-light);font-size:12px">-</span>
+            <% } %>
+          </td>
+
+          <td style="text-align:right;white-space:nowrap">
+            <a href="/ministros/<%= m.id %>/editar" class="btn btn-sm btn-outline">
+              <i class="fas fa-edit"></i>
+            </a>
+            <button class="btn btn-sm btn-danger" onclick="deletar(<%= m.id %>, this)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Aviso sem resultado na busca -->
+<div id="sem-resultado" style="display:none" class="card">
+  <div class="empty-state" style="padding:40px 20px">
+    <i class="fas fa-search"></i>
+    <p>Nenhum ministro encontrado para "<span id="termo-busca"></span>"</p>
+  </div>
+</div>
+
+<!-- Paginador -->
+<div id="paginador" style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:10px">
+  <div id="info-pagina" style="font-size:13px;color:var(--text-light)"></div>
+  <div style="display:flex;align-items:center;gap:6px">
+    <button id="btn-anterior" class="btn btn-outline btn-sm" onclick="mudarPagina(-1)" disabled>
+      <i class="fas fa-chevron-left"></i> Anterior
+    </button>
+    <div id="paginas-numeros" style="display:flex;gap:4px"></div>
+    <button id="btn-proximo" class="btn btn-outline btn-sm" onclick="mudarPagina(1)">
+      Proximo <i class="fas fa-chevron-right"></i>
+    </button>
+  </div>
+</div>
+
+<% } %>
+
+<style>
+.pg-num {
+  width:32px;height:32px;border-radius:8px;
+  border:2px solid var(--border);background:#fff;
+  font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;
+  color:var(--text-mid);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.pg-num:hover { border-color:var(--primary);color:var(--primary); }
+.pg-num.ativa { background:var(--primary);border-color:var(--primary);color:#fff; }
+.tr-ministro.oculta { display:none; }
+mark { background:#fff3cd;border-radius:3px;padding:0 2px; }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// Dados de todos os ministros cadastrados (para exportar em Excel)
+var MINISTROS_EXPORT = <%- JSON.stringify(ministros.map(function(m) {
+  return {
+    id: m.id,
+    nome: m.nome,
+    chamados: Array.isArray(m.chamados) ? m.chamados.join(', ') : '',
+    licenciado: !!m.licenciado,
+    ordenado: !!m.ordenado,
+    convidado: !!m.convidado,
+    igreja: m.convidado ? 'Visitante' : (m.nome_igreja || ''),
+    sigla: m.sigla || '',
+    telefone: m.telefone || ''
+  };
+})).replace(/</g, '\\u003c') %>;
+
+// Exporta TODOS os ministros cadastrados (ignora busca e paginação).
+// Ministros excluídos nesta tela (sem recarregar) ficam de fora.
+function exportarExcel() {
+  var idsNaTela = {};
+  todasLinhas.forEach(function(tr) { idsNaTela[tr.dataset.id] = true; });
+  var lista = MINISTROS_EXPORT.filter(function(m) { return idsNaTela[String(m.id)]; });
+  if (lista.length === 0) { alert('Nenhum ministro para exportar.'); return; }
+
+  var linhas = lista.map(function(m, i) {
+    var ordenacao = [];
+    if (m.licenciado) ordenacao.push('Licenciado');
+    if (m.ordenado)   ordenacao.push('Ordenado');
+    return {
+      '#': i + 1,
+      'Nome': m.nome,
+      'Chamado(s)': m.chamados,
+      'Ordenação': ordenacao.join(', '),
+      'Tipo': m.convidado ? 'Convidado' : 'Membro',
+      'Igreja': m.igreja,
+      'Sigla': m.convidado ? '' : m.sigla,
+      'Telefone': m.telefone
+    };
+  });
+
+  var wb = XLSX.utils.book_new();
+  var ws = XLSX.utils.json_to_sheet(linhas);
+  ws['!cols'] = [{wch:5},{wch:35},{wch:30},{wch:22},{wch:12},{wch:35},{wch:10},{wch:18}];
+  ws['!autofilter'] = { ref: ws['!ref'] };
+  XLSX.utils.book_append_sheet(wb, ws, 'Ministros');
+
+  var d = new Date();
+  var data = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  XLSX.writeFile(wb, 'Ministros_' + data + '.xlsx');
+}
+
+var POR_PAGINA    = 20;
+var paginaAtual   = 1;
+var termoBusca    = '';
+var todasLinhas   = Array.from(document.querySelectorAll('.tr-ministro'));
+var linhasFiltradas = todasLinhas.slice();
+
+// Restaurar busca apos delete via sessionStorage
+var buscaSalva = sessionStorage.getItem('ministro_busca');
+if (buscaSalva) {
+  sessionStorage.removeItem('ministro_busca');
+  document.getElementById('busca-ministro').value = buscaSalva;
+  termoBusca = buscaSalva.toLowerCase();
+  linhasFiltradas = todasLinhas.filter(function(tr) {
+    return tr.dataset.nome.indexOf(termoBusca) !== -1;
+  });
+}
+
+// Delete via AJAX — remove da tela imediatamente sem recarregar
+async function deletar(id, btn) {
+  if (!confirm('Remover este ministro?')) return;
+
+  // Salvar termo de busca atual
+  var campo = document.getElementById('busca-ministro');
+  if (campo && campo.value) {
+    sessionStorage.setItem('ministro_busca', campo.value);
+  }
+
+  try {
+    var res = await fetch('/ministros/deletar-ajax/' + id, { method: 'POST' });
+    var data = await res.json();
+
+    // Ministro com escalas: pedir confirmação para excluir tudo junto
+    if (!data.success && data.temEscalas) {
+      var msg = 'Este ministro possui ' + data.total + ' escala(s) cadastrada(s).\n\n' +
+                'Para excluí-lo, as escalas dele também serão EXCLUÍDAS ' +
+                '(e deixarão de aparecer no Relatório).\n\n' +
+                'Esta ação não pode ser desfeita. Deseja continuar?';
+      if (!confirm(msg)) return;
+      res  = await fetch('/ministros/deletar-ajax/' + id + '?forcar=1', { method: 'POST' });
+      data = await res.json();
+    }
+
+    if (data.success) {
+      // Remover linha do DOM imediatamente
+      var tr = btn.closest('tr');
+      var idx = todasLinhas.indexOf(tr);
+      if (idx !== -1) todasLinhas.splice(idx, 1);
+      var idx2 = linhasFiltradas.indexOf(tr);
+      if (idx2 !== -1) linhasFiltradas.splice(idx2, 1);
+      tr.remove();
+      renderizar();
+    } else {
+      alert('Erro ao remover ministro.' + (data.erro ? '\n\n' + data.erro : ''));
+    }
+  } catch(e) {
+    alert('Erro ao remover ministro.');
+  }
+}
+
+function buscar(termo) {
+  termoBusca  = termo.trim().toLowerCase();
+  paginaAtual = 1;
+  linhasFiltradas = termoBusca === ''
+    ? todasLinhas.slice()
+    : todasLinhas.filter(function(tr) {
+        return tr.dataset.nome.indexOf(termoBusca) !== -1;
+      });
+  renderizar();
+}
+
+function mudarPagina(delta) {
+  var totalPags = Math.ceil(linhasFiltradas.length / POR_PAGINA);
+  paginaAtual = Math.max(1, Math.min(paginaAtual + delta, totalPags));
+  renderizar();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function irParaPagina(p) {
+  paginaAtual = p;
+  renderizar();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderizar() {
+  var total     = linhasFiltradas.length;
+  var totalPags = Math.max(1, Math.ceil(total / POR_PAGINA));
+  if (paginaAtual > totalPags) paginaAtual = totalPags;
+  var inicio = (paginaAtual - 1) * POR_PAGINA;
+  var fim    = Math.min(inicio + POR_PAGINA, total);
+
+  todasLinhas.forEach(function(tr) { tr.classList.add('oculta'); });
+
+  linhasFiltradas.slice(inicio, fim).forEach(function(tr, idx) {
+    tr.classList.remove('oculta');
+    var tdNum = tr.querySelector('.td-num');
+    if (tdNum) tdNum.textContent = inicio + idx + 1;
+    // Limpar highlight anterior
+    var tdNome = tr.querySelector('.td-nome');
+    if (tdNome) {
+      var nomeOriginal = tr.dataset.nome;
+      // Capitalizar para exibir
+      var nomeDisplay = tdNome.textContent || nomeOriginal;
+      if (termoBusca) {
+        var idx2 = nomeDisplay.toLowerCase().indexOf(termoBusca);
+        if (idx2 !== -1) {
+          tdNome.innerHTML =
+            esc(nomeDisplay.substring(0, idx2)) +
+            '<mark>' + esc(nomeDisplay.substring(idx2, idx2 + termoBusca.length)) + '</mark>' +
+            esc(nomeDisplay.substring(idx2 + termoBusca.length));
+        }
+      } else {
+        tdNome.textContent = tdNome.textContent;
+      }
+    }
+  });
+
+  // Sem resultado
+  var semRes = document.getElementById('sem-resultado');
+  var cardTabela = document.querySelector('#tabela-ministros') ? document.querySelector('#tabela-ministros').closest('.card') : null;
+  if (total === 0 && termoBusca !== '') {
+    document.getElementById('termo-busca').textContent = termoBusca;
+    semRes.style.display = 'block';
+    if (cardTabela) cardTabela.style.display = 'none';
+  } else {
+    semRes.style.display = 'none';
+    if (cardTabela) cardTabela.style.display = 'block';
+  }
+
+  // Info
+  var info = document.getElementById('info-pagina');
+  if (total > 0) {
+    info.textContent = 'Exibindo ' + (inicio + 1) + '\u2013' + fim + ' de ' + total + ' ministro(s)';
+  } else {
+    info.textContent = termoBusca ? '0 resultados' : '';
+  }
+
+  // Botoes
+  document.getElementById('btn-anterior').disabled = paginaAtual <= 1;
+  document.getElementById('btn-proximo').disabled  = paginaAtual >= totalPags;
+
+  // Numeros de pagina
+  var cont = document.getElementById('paginas-numeros');
+  cont.innerHTML = '';
+  var pIni = Math.max(1, paginaAtual - 2);
+  var pFim = Math.min(totalPags, paginaAtual + 2);
+  if (pIni > 1) { cont.appendChild(criarBtn(1)); if (pIni > 2) cont.appendChild(reticencias()); }
+  for (var p = pIni; p <= pFim; p++) cont.appendChild(criarBtn(p));
+  if (pFim < totalPags) { if (pFim < totalPags - 1) cont.appendChild(reticencias()); cont.appendChild(criarBtn(totalPags)); }
+
+  document.getElementById('paginador').style.display =
+    (totalPags <= 1 && total <= POR_PAGINA) ? 'none' : 'flex';
+
+  // Contador
+  var ct = document.getElementById('contador-busca');
+  ct.textContent = termoBusca
+    ? total + ' resultado(s) para "' + termoBusca + '"'
+    : total + ' ministro(s)';
+}
+
+function criarBtn(p) {
+  var b = document.createElement('button');
+  b.textContent = p;
+  b.className   = 'pg-num' + (p === paginaAtual ? ' ativa' : '');
+  b.onclick     = (function(pg) { return function() { irParaPagina(pg); }; })(p);
+  return b;
+}
+
+function reticencias() {
+  var s = document.createElement('span');
+  s.textContent = '...';
+  s.style.cssText = 'color:var(--text-light);font-size:13px;padding:0 4px;align-self:center';
+  return s;
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+renderizar();
+</script>
+
+<%- include('../partials/footer') %>

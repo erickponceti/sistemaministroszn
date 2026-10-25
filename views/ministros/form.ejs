@@ -1,0 +1,405 @@
+<%- include('../partials/header') %>
+
+<div class="breadcrumb">
+  <a href="/ministros"><i class="fas fa-user-tie"></i> Ministros</a>
+  <i class="fas fa-chevron-right" style="font-size:10px"></i>
+  <span><%= ministro ? 'Editar' : 'Novo Ministro' %></span>
+</div>
+
+<div class="card" style="max-width:580px">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fas fa-user-tie" style="color:var(--primary)"></i>
+      <%= ministro ? 'Editar Ministro' : 'Cadastrar Novo Ministro' %>
+    </div>
+  </div>
+
+  <form action="<%= ministro ? '/ministros/' + ministro.id : '/ministros' %>" method="POST">
+
+    <!-- Nome -->
+    <div class="form-group">
+      <label class="form-label">Nome do Ministro *</label>
+      <input type="text" name="nome" class="form-control" required
+        value="<%= ministro ? ministro.nome : '' %>"
+        placeholder="Nome completo do ministro">
+    </div>
+
+    <!-- Telefone -->
+    <div class="form-group">
+      <label class="form-label"><i class="fas fa-phone" style="color:#0088cc"></i> Telefone / Telegram</label>
+      <div style="position:relative">
+        <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--text-light);font-weight:700;pointer-events:none">📱</span>
+        <input type="tel" name="telefone" class="form-control" style="padding-left:40px"
+          value="<%= ministro && ministro.telefone ? ministro.telefone : '' %>"
+          placeholder="081 9 8234-9298"
+          oninput="formatarTelefone(this)">
+      </div>
+      <div style="font-size:11px;color:var(--text-light);margin-top:5px">
+        <i class="fas fa-info-circle"></i> Usado para envio da escala via Telegram
+      </div>
+    </div>
+
+    <!-- Chamados -->
+    <div class="form-group">
+      <label class="form-label">Chamado(s) *</label>
+      <div class="chamados-grid">
+        <%
+          var chamadosIcons = {
+            'Apóstolo':   { icon: 'fas fa-crown',         color: '#0B6E99', bg: '#E6F1FC' },
+            'Evangelista':{ icon: 'fas fa-bible',          color: '#1B5E20', bg: '#EDF5EE' },
+            'Pastor':     { icon: 'fas fa-church',         color: '#01539D', bg: '#EAF2FB' },
+            'Mestre':     { icon: 'fas fa-graduation-cap', color: '#3E4C63', bg: '#EEF1F6' },
+            'Profeta':    { icon: 'fas fa-eye',            color: '#4C3FA8', bg: '#ECEAFB' }
+          };
+          var chamadosSelecionados = [];
+          if (ministro && ministro.chamados && ministro.chamados.length > 0) {
+            chamadosSelecionados = ministro.chamados;
+          } else if (ministro && ministro.chamado) {
+            chamadosSelecionados = [ministro.chamado];
+          }
+        %>
+        <% CHAMADOS.forEach(function(c) {
+          var info = chamadosIcons[c] || { icon: 'fas fa-star', color: '#4a5568', bg: '#f0f4f8' };
+          var isChecked = chamadosSelecionados.indexOf(c) !== -1;
+        %>
+          <label class="chamado-check <%= isChecked ? 'checked' : '' %>">
+            <input type="checkbox" name="chamados" value="<%= c %>"
+              <%= isChecked ? 'checked' : '' %>
+              onchange="toggleCheckCard(this)">
+            <span class="chamado-icon" style="background:<%= info.bg %>;color:<%= info.color %>">
+              <i class="<%= info.icon %>"></i>
+            </span>
+            <span class="chamado-label"><%= c %></span>
+            <span class="chamado-check-mark"><i class="fas fa-check"></i></span>
+          </label>
+        <% }); %>
+      </div>
+      <div style="font-size:11px;color:var(--text-light);margin-top:6px">
+        <i class="fas fa-info-circle"></i> Selecione um ou mais chamados
+      </div>
+    </div>
+
+    <!-- Ordenação -->
+    <div class="form-group">
+      <label class="form-label"><i class="fas fa-certificate" style="color:#f5a623"></i> Ordenação</label>
+      <div class="ordenacao-grid">
+
+        <label class="ord-check <%= ministro && ministro.licenciado ? 'checked' : '' %>">
+          <input type="checkbox" name="licenciado"
+            <%= ministro && ministro.licenciado ? 'checked' : '' %>
+            onchange="toggleCheckCard(this)">
+          <span class="ord-icon" style="background:#fff3e0;color:#e65100">
+            <i class="fas fa-id-badge"></i>
+          </span>
+          <div class="ord-info">
+            <span class="ord-title">Licenciado</span>
+            <span class="ord-desc">Em processo de ordenação</span>
+          </div>
+          <span class="chamado-check-mark"><i class="fas fa-check"></i></span>
+        </label>
+
+        <label class="ord-check <%= ministro && ministro.ordenado ? 'checked' : '' %>">
+          <input type="checkbox" name="ordenado"
+            <%= ministro && ministro.ordenado ? 'checked' : '' %>
+            onchange="toggleCheckCard(this)">
+          <span class="ord-icon" style="background:#e8f5e9;color:#1b5e20">
+            <i class="fas fa-certificate"></i>
+          </span>
+          <div class="ord-info">
+            <span class="ord-title">Ordenado</span>
+            <span class="ord-desc">Ministério confirmado</span>
+          </div>
+          <span class="chamado-check-mark"><i class="fas fa-check"></i></span>
+        </label>
+
+      </div>
+    </div>
+
+    <!-- Ministro Convidado toggle -->
+    <div class="form-group">
+      <label class="form-label">Tipo de Ministro</label>
+      <label class="convidado-toggle">
+        <input type="checkbox" name="convidado" id="chk-convidado"
+          <%= ministro && ministro.convidado ? 'checked' : '' %>
+          onchange="toggleConvidado(this.checked)">
+        <div class="convidado-track">
+          <div class="convidado-thumb"></div>
+        </div>
+        <div class="convidado-info">
+          <span class="convidado-title">Ministro Convidado da Casa</span>
+          <span class="convidado-desc">Visitante — não está vinculado a nenhuma igreja</span>
+        </div>
+      </label>
+    </div>
+
+    <!-- Igreja -->
+    <div class="form-group" id="grupo-igreja" style="<%= ministro && ministro.convidado ? 'display:none' : '' %>">
+      <label class="form-label">Igreja</label>
+      <select name="igreja_id" class="form-control">
+        <option value="">— Sem vínculo de igreja —</option>
+        <% igrejas.forEach(function(ig) { %>
+          <option value="<%= ig.id %>" <%= ministro && ministro.igreja_id == ig.id ? 'selected' : '' %>>
+            <%= ig.nome %> (<%= ig.sigla %>)
+          </option>
+        <% }); %>
+      </select>
+    </div>
+
+    <!-- Aviso convidado -->
+    <div id="aviso-convidado" style="display:<%= ministro && ministro.convidado ? 'flex' : 'none' %>;
+      background:#fff3e0;border:1px solid #ffe0b2;border-radius:10px;
+      padding:12px 16px;align-items:center;gap:10px;margin-bottom:18px">
+      <i class="fas fa-plane-arrival" style="color:#f57c00;font-size:20px"></i>
+      <div>
+        <div style="font-weight:700;font-size:13px;color:#e65100">Ministro Convidado</div>
+        <div style="font-size:12px;color:#bf360c">Visitante — sem vínculo com igrejas cadastradas.</div>
+      </div>
+    </div>
+
+    <!-- Bloco de Acesso ao Portal do Ministro -->
+    <div class="form-group" style="margin-top:8px">
+      <div class="portal-bloco">
+        <div class="portal-bloco-header">
+          <div class="portal-bloco-icon">
+            <i class="fas fa-user-shield"></i>
+          </div>
+          <div>
+            <div class="portal-bloco-title">Acesso ao Portal do Ministro</div>
+            <div class="portal-bloco-sub">Credenciais para o ministro acessar /ministro</div>
+          </div>
+        </div>
+        <div class="portal-campos">
+          <div>
+            <label class="portal-label">
+              <i class="fas fa-envelope"></i> E-mail de Acesso
+            </label>
+            <input type="email" name="email_acesso" class="portal-input"
+              value="<%= ministro && ministro.email_acesso ? ministro.email_acesso : '' %>"
+              placeholder="email@ministro.com">
+          </div>
+          <div>
+            <label class="portal-label">
+              <i class="fas fa-lock"></i> Senha de Acesso
+            </label>
+            <div style="position:relative">
+              <input type="password" name="senha_acesso" id="inp-senha-acesso" class="portal-input"
+                style="padding-right:40px"
+                placeholder="<%= ministro && ministro.email_acesso ? 'manter atual' : 'Nova senha' %>">
+              <button type="button" onclick="toggleSenhaAcesso()" tabindex="-1" class="portal-eye-btn">
+                <i class="fas fa-eye" id="ico-senha-acesso"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <% if (ministro && ministro.email_acesso) { %>
+        <div class="portal-status portal-status-ativo">
+          <i class="fas fa-check-circle"></i>
+          <span>Portal ativo — <strong><%= ministro.email_acesso %></strong></span>
+        </div>
+        <% } else { %>
+        <div class="portal-status portal-status-info">
+          <i class="fas fa-info-circle"></i>
+          <span>Preencha e-mail e senha para habilitar o acesso do ministro ao portal.</span>
+        </div>
+        <% } %>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i> <%= ministro ? 'Salvar Alterações' : 'Cadastrar Ministro' %>
+      </button>
+      <a href="/ministros" class="btn btn-outline"><i class="fas fa-times"></i> Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<style>
+/* CHAMADOS GRID */
+.chamados-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.chamado-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  background: #fff;
+  user-select: none;
+}
+.chamado-check input[type="checkbox"] { display: none; }
+.chamado-check:hover   { border-color: var(--primary); background: var(--primary-light); }
+.chamado-check.checked { border-color: var(--primary); background: var(--primary-light); }
+.chamado-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+}
+.chamado-label { font-size: 13px; font-weight: 700; color: var(--text-dark); flex: 1; }
+.chamado-check-mark {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; color: transparent;
+  transition: background .15s, color .15s; flex-shrink: 0;
+}
+.chamado-check.checked .chamado-check-mark,
+.ord-check.checked     .chamado-check-mark {
+  background: var(--primary); color: #fff;
+}
+
+/* ORDENAÇÃO GRID */
+.ordenacao-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.ord-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  background: #fff;
+  user-select: none;
+}
+.ord-check input[type="checkbox"] { display: none; }
+.ord-check:hover   { border-color: var(--primary); background: var(--primary-light); }
+.ord-check.checked { border-color: var(--primary); background: var(--primary-light); }
+.ord-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.ord-info { flex: 1; }
+.ord-title { display: block; font-size: 13px; font-weight: 800; color: var(--text-dark); }
+.ord-desc  { display: block; font-size: 11px; color: var(--text-light); margin-top: 1px; }
+
+/* TOGGLE CONVIDADO */
+.convidado-toggle {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 16px;
+  border: 2px solid var(--border); border-radius: 12px;
+  cursor: pointer; transition: border-color .2s, background .2s;
+  background: #fff; user-select: none;
+}
+.convidado-toggle:hover { border-color: #f57c00; background: #fff8f0; }
+.convidado-toggle input[type="checkbox"] { display: none; }
+.convidado-track {
+  width: 44px; height: 24px;
+  background: #e2e8f0; border-radius: 12px;
+  position: relative; transition: background .2s; flex-shrink: 0;
+}
+.convidado-thumb {
+  width: 18px; height: 18px; background: #fff; border-radius: 50%;
+  position: absolute; top: 3px; left: 3px;
+  transition: transform .2s; box-shadow: 0 1px 4px rgba(0,0,0,.18);
+}
+.convidado-toggle input:checked ~ .convidado-track { background: #f57c00; }
+.convidado-toggle input:checked ~ .convidado-track .convidado-thumb { transform: translateX(20px); }
+.convidado-info { flex: 1; }
+.convidado-title { display: block; font-weight: 800; font-size: 14px; color: var(--text-dark); }
+.convidado-desc  { display: block; font-size: 12px; color: var(--text-light); margin-top: 2px; }
+
+/* PORTAL DO MINISTRO */
+.portal-bloco {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border-radius: 14px;
+  padding: 20px 22px;
+}
+.portal-bloco-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+}
+.portal-bloco-icon {
+  width: 36px; height: 36px;
+  background: rgba(255,255,255,0.2); border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 16px; flex-shrink: 0;
+}
+.portal-bloco-title { color: #fff; font-weight: 800; font-size: 14px; }
+.portal-bloco-sub   { color: rgba(255,255,255,0.75); font-size: 11px; margin-top: 1px; }
+.portal-campos      { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.portal-label {
+  display: block;
+  color: rgba(255,255,255,0.85);
+  font-size: 12px; font-weight: 700; margin-bottom: 6px;
+}
+.portal-input {
+  width: 100%;
+  padding: 9px 13px;
+  background: rgba(255,255,255,0.12);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  border-radius: 8px;
+  color: #fff;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color .2s;
+  box-sizing: border-box;
+}
+.portal-input:focus        { border-color: rgba(255,255,255,0.7); }
+.portal-input::placeholder { color: rgba(255,255,255,0.45); }
+.portal-eye-btn {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  color: rgba(255,255,255,0.65); padding: 0; font-size: 14px;
+}
+.portal-eye-btn:hover { color: #fff; }
+.portal-status {
+  margin-top: 12px; border-radius: 8px; padding: 9px 13px;
+  display: flex; align-items: center; gap: 8px; font-size: 12px;
+}
+.portal-status i { font-size: 14px; flex-shrink: 0; }
+.portal-status-ativo { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.9); }
+.portal-status-ativo i { color: #86efac; }
+.portal-status-info  { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+.portal-status-info  i { color: rgba(255,255,255,0.55); }
+</style>
+
+<script>
+function toggleCheckCard(input) {
+  input.closest('label').classList.toggle('checked', input.checked);
+}
+
+function toggleConvidado(checked) {
+  document.getElementById('grupo-igreja').style.display    = checked ? 'none'  : 'block';
+  document.getElementById('aviso-convidado').style.display = checked ? 'flex'  : 'none';
+}
+
+function toggleSenhaAcesso() {
+  var inp = document.getElementById('inp-senha-acesso');
+  var ico = document.getElementById('ico-senha-acesso');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    ico.className = 'fas fa-eye-slash';
+  } else {
+    inp.type = 'password';
+    ico.className = 'fas fa-eye';
+  }
+}
+
+function formatarTelefone(input) {
+  var v = input.value.replace(/\D/g, '');
+  if (v.length <= 2) {
+    input.value = v;
+  } else if (v.length <= 7) {
+    input.value = v.substring(0,2) + ' ' + v.substring(2,3) + ' ' + v.substring(3);
+  } else {
+    input.value = v.substring(0,2) + ' ' + v.substring(2,3) + ' ' + v.substring(3,7) + '-' + v.substring(7,11);
+  }
+}
+</script>
+
+<%- include('../partials/footer') %>

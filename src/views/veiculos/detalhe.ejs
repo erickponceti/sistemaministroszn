@@ -1,0 +1,177 @@
+<%- include('../partials/header', {page:'veiculos'}) %>
+
+<div class="breadcrumb">
+  <a href="/veiculos"><i class="fas fa-car"></i> Veículos</a>
+  <i class="fas fa-chevron-right"></i>
+  <span><%= veiculo.placa %></span>
+</div>
+
+<div class="veiculo-hero">
+  <div class="veiculo-hero-icon"><%= veiculo.tipo === 'carro' ? '🚗' : '🏍️' %></div>
+  <div class="veiculo-hero-info" style="flex:1;">
+    <h2><%= veiculo.marca %> <%= veiculo.modelo %> <%= veiculo.ano_modelo || '' %></h2>
+    <div class="placa-big"><%= veiculo.placa %></div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span class="badge badge-<%= veiculo.status %>"><i class="fas fa-circle" style="font-size:6px;"></i> <%= veiculo.status.charAt(0).toUpperCase() + veiculo.status.slice(1) %></span>
+      <span style="color:rgba(255,255,255,0.7);font-size:13px;"><i class="fas fa-gas-pump"></i> <%= veiculo.combustivel || '—' %></span>
+      <span style="color:rgba(255,255,255,0.7);font-size:13px;"><i class="fas fa-road"></i> <%= veiculo.km_atual ? veiculo.km_atual.toLocaleString('pt-BR') + ' km' : '—' %></span>
+      <% if (veiculo.valor_semanal) { %>
+      <span style="color:#86EFAC;font-size:13px;font-weight:700;"><i class="fas fa-tag"></i> R$ <%= parseFloat(veiculo.valor_semanal).toLocaleString('pt-BR',{minimumFractionDigits:2}) %>/sem</span>
+      <% } %>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <a href="/veiculos/<%= veiculo.id %>/editar" class="btn btn-outline" style="border-color:rgba(255,255,255,0.2);color:white;"><i class="fas fa-edit"></i> Editar</a>
+    <% if (veiculo.status === 'disponivel') { %>
+    <a href="/alugueis/novo?veiculo_id=<%= veiculo.id %>" class="btn btn-success"><i class="fas fa-key"></i> Novo Aluguel</a>
+    <% } %>
+  </div>
+</div>
+
+<div class="tabs-container">
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab-info">📋 Informações</button>
+    <button class="tab-btn" data-tab="tab-alugueis">🔑 Histórico de Aluguéis</button>
+    <button class="tab-btn" data-tab="tab-checklists">✅ Checklists</button>
+    <button class="tab-btn" data-tab="tab-manutencoes">🔧 Manutenções</button>
+  </div>
+
+  <div id="tab-info" class="tab-content active">
+    <div class="form-row form-row-2" style="gap:16px;">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="fas fa-info-circle"></i> Dados do Veículo</div></div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div><small style="color:#94A3B8;display:block;">RENAVAM</small><strong><%= veiculo.renavam || '—' %></strong></div>
+            <div><small style="color:#94A3B8;display:block;">Chassi</small><strong style="font-family:monospace;font-size:12px;"><%= veiculo.chassi || '—' %></strong></div>
+            <div><small style="color:#94A3B8;display:block;">Cor</small><strong><%= veiculo.cor || '—' %></strong></div>
+            <div><small style="color:#94A3B8;display:block;">Combustível</small><strong><%= veiculo.combustivel || '—' %></strong></div>
+            <div><small style="color:#94A3B8;display:block;">Ano Fabricação</small><strong><%= veiculo.ano_fabricacao || '—' %></strong></div>
+            <div><small style="color:#94A3B8;display:block;">Ano Modelo</small><strong><%= veiculo.ano_modelo || '—' %></strong></div>
+            <div><small style="color:#94A3B8;display:block;">KM Atual</small><strong class="km-display"><%= veiculo.km_atual ? veiculo.km_atual.toLocaleString('pt-BR') + ' km' : '—' %></strong></div>
+            <div><small style="color:#94A3B8;display:block;">Proprietário</small><strong><%= veiculo.proprietario_nome || '—' %></strong></div>
+          </div>
+          <% if (veiculo.observacoes) { %>
+          <div style="margin-top:12px;padding:12px;background:#F8FAFC;border-radius:8px;">
+            <small style="color:#94A3B8;display:block;margin-bottom:4px;">OBSERVAÇÕES</small>
+            <p style="font-size:13px;"><%= veiculo.observacoes %></p>
+          </div>
+          <% } %>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="fas fa-chart-bar"></i> Resumo Financeiro</div></div>
+        <div class="card-body">
+          <div style="text-align:center;padding:20px 0;">
+            <div style="font-size:32px;font-weight:800;color:var(--success);font-family:var(--font-mono);">
+              R$ <%= veiculo.valor_semanal ? parseFloat(veiculo.valor_semanal).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '0,00' %>
+            </div>
+            <div style="color:#94A3B8;font-size:12px;margin-top:4px;">valor por semana</div>
+            <div style="font-size:20px;font-weight:700;color:var(--primary);margin-top:16px;font-family:var(--font-mono);">
+              R$ <%= veiculo.valor_semanal ? (parseFloat(veiculo.valor_semanal) * 4).toLocaleString('pt-BR',{minimumFractionDigits:2}) : '0,00' %>
+            </div>
+            <div style="color:#94A3B8;font-size:12px;margin-top:4px;">estimativa mensal (4 sem.)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-alugueis" class="tab-content">
+    <div class="table-wrapper">
+      <% if (historicoAlugueis.length === 0) { %>
+      <div class="empty-state"><i class="fas fa-key"></i><p>Sem histórico de aluguéis.</p></div>
+      <% } else { %>
+      <table>
+        <thead><tr><th>Cliente</th><th>Início</th><th>Término Prev.</th><th>Término Real</th><th>Valor/Sem</th><th>Status</th><th>Ações</th></tr></thead>
+        <tbody>
+          <% historicoAlugueis.forEach(a => { %>
+          <tr>
+            <td><strong><%= a.cliente_nome %></strong></td>
+            <td><%= new Date(a.data_inicio).toLocaleDateString('pt-BR') %></td>
+            <td><%= new Date(a.data_fim_prevista).toLocaleDateString('pt-BR') %></td>
+            <td><%= a.data_fim_real ? new Date(a.data_fim_real).toLocaleDateString('pt-BR') : '—' %></td>
+            <td>R$ <%= parseFloat(a.valor_semanal).toLocaleString('pt-BR',{minimumFractionDigits:2}) %></td>
+            <td><span class="badge badge-<%= a.status %>"><%= a.status %></span></td>
+            <td>
+              <div style="display:flex;gap:4px;">
+                <a href="/alugueis/<%= a.id %>" class="btn btn-outline btn-sm btn-icon"><i class="fas fa-eye"></i></a>
+                <button class="btn btn-primary btn-sm" onclick="abrirComparacao(<%= a.id %>)">
+                  <i class="fas fa-balance-scale"></i> Comparar
+                </button>
+              </div>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+  </div>
+
+  <div id="tab-checklists" class="tab-content">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+      <a href="/checklists/novo?tipo=checkin" class="btn btn-success btn-sm"><i class="fas fa-plus"></i> Novo Checklist</a>
+    </div>
+    <div class="table-wrapper">
+      <% if (checklists.length === 0) { %>
+      <div class="empty-state"><i class="fas fa-clipboard-check"></i><p>Sem checklists registrados.</p></div>
+      <% } else { %>
+      <table>
+        <thead><tr><th>Tipo</th><th>Data/Hora</th><th>KM</th><th>Realizado por</th><th>Combustível</th><th>Motor</th></tr></thead>
+        <tbody>
+          <% checklists.forEach(c => { %>
+          <tr>
+            <td><span class="badge badge-<%= c.tipo %>"><i class="fas fa-sign-<%= c.tipo === 'checkin' ? 'in' : 'out' %>-alt"></i> <%= c.tipo === 'checkin' ? 'Check-in' : 'Check-out' %></span></td>
+            <td><%= new Date(c.criado_em).toLocaleString('pt-BR') %></td>
+            <td class="km-display"><%= c.km_veiculo ? c.km_veiculo.toLocaleString('pt-BR') + ' km' : '—' %></td>
+            <td><%= c.realizado_por_nome || '—' %></td>
+            <td><%= c.tanque_combustivel || '—' %></td>
+            <td><%= c.motor || '—' %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+  </div>
+
+  <div id="tab-manutencoes" class="tab-content">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+      <a href="/manutencoes/novo?veiculo_id=<%= veiculo.id %>" class="btn btn-warning btn-sm"><i class="fas fa-plus"></i> Nova Manutenção</a>
+    </div>
+    <div class="table-wrapper">
+      <% if (manutencoes.length === 0) { %>
+      <div class="empty-state"><i class="fas fa-wrench"></i><p>Sem manutenções registradas.</p></div>
+      <% } else { %>
+      <table>
+        <thead><tr><th>Tipo</th><th>Data</th><th>Descrição</th><th>Valor</th><th>Próx. Revisão</th></tr></thead>
+        <tbody>
+          <% manutencoes.forEach(m => { %>
+          <tr>
+            <td><strong><%= m.tipo %></strong></td>
+            <td><%= new Date(m.data_manutencao).toLocaleDateString('pt-BR') %></td>
+            <td><%= m.descricao || '—' %></td>
+            <td><% if (m.valor) { %><strong style="color:var(--danger)">R$ <%= parseFloat(m.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}) %></strong><% } else { %>—<% } %></td>
+            <td><% if (m.proxima_data) { %><%= new Date(m.proxima_data).toLocaleDateString('pt-BR') %><% } else if (m.proximo_km) { %><span class="km-display"><%= m.proximo_km.toLocaleString('pt-BR') %> km</span><% } else { %>—<% } %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Comparação -->
+<div class="modal-backdrop" id="modal-comparacao">
+  <div class="modal" style="max-width:960px;">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fas fa-balance-scale" style="color:var(--primary)"></i> Módulo de Comparação — Check-in vs Check-out</div>
+      <button class="modal-close" onclick="closeModal('modal-comparacao')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="comparacao-body"></div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

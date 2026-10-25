@@ -1,0 +1,82 @@
+<%- include('../partials/header', {page: tipo_pre === 'cliente' ? 'clientes' : tipo_pre === 'fornecedor' ? 'fornecedores' : 'empresas'}) %>
+
+<div class="breadcrumb">
+  <a href="/pessoas"><i class="fas fa-users"></i> Cadastros</a>
+  <i class="fas fa-chevron-right"></i>
+  <span><%= pessoa ? 'Editar' : 'Novo' %></span>
+</div>
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1><i class="fas fa-<%= pessoa ? 'edit' : 'user-plus' %>" style="color:var(--primary)"></i> <%= pessoa ? 'Editar Cadastro' : 'Novo Cadastro' %></h1>
+  </div>
+</div>
+
+<form action="/pessoas<%= pessoa ? '/' + pessoa.id + '?_method=PUT' : '' %>" method="POST">
+  <div class="card">
+    <div class="card-body">
+      <div class="form-row form-row-3">
+        <div class="form-group">
+          <label>Tipo <span class="req">*</span></label>
+          <select name="tipo" required>
+            <option value="cliente" <%= (!pessoa && tipo_pre === 'cliente') || pessoa?.tipo === 'cliente' ? 'selected' : '' %>>👤 Cliente</option>
+            <option value="fornecedor" <%= (!pessoa && tipo_pre === 'fornecedor') || pessoa?.tipo === 'fornecedor' ? 'selected' : '' %>>🚚 Fornecedor</option>
+            <option value="empresa" <%= (!pessoa && tipo_pre === 'empresa') || pessoa?.tipo === 'empresa' ? 'selected' : '' %>>🏢 Empresa</option>
+          </select>
+        </div>
+        <div class="form-group span-2">
+          <label>Nome Completo / Razão Social <span class="req">*</span></label>
+          <input type="text" name="nome" value="<%= pessoa?.nome || '' %>" placeholder="Nome completo ou razão social" required>
+        </div>
+        <div class="form-group">
+          <label>CPF / CNPJ</label>
+          <input type="text" name="cpf_cnpj" value="<%= pessoa?.cpf_cnpj || '' %>" placeholder="000.000.000-00">
+        </div>
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" name="email" value="<%= pessoa?.email || '' %>" placeholder="email@exemplo.com">
+        </div>
+        <div class="form-group">
+          <label>Telefone</label>
+          <input type="text" name="telefone" value="<%= pessoa?.telefone || '' %>" placeholder="(00) 0000-0000">
+        </div>
+        <div class="form-group">
+          <label><i class="fab fa-whatsapp" style="color:#25D366"></i> WhatsApp</label>
+          <input type="text" name="whatsapp" value="<%= pessoa?.whatsapp || '' %>" placeholder="(00) 00000-0000">
+        </div>
+        <div class="form-group">
+          <label>CEP</label>
+          <input type="text" name="cep" value="<%= pessoa?.cep || '' %>" placeholder="00000-000">
+        </div>
+        <div class="form-group">
+          <label>Cidade</label>
+          <input type="text" name="cidade" value="<%= pessoa?.cidade || '' %>" placeholder="Cidade">
+        </div>
+        <div class="form-group">
+          <label>Estado</label>
+          <select name="estado">
+            <option value="">—</option>
+            <% ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].forEach(uf => { %>
+            <option value="<%= uf %>" <%= pessoa?.estado === uf ? 'selected' : '' %>><%= uf %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group span-3">
+          <label>Endereço</label>
+          <input type="text" name="endereco" value="<%= pessoa?.endereco || '' %>" placeholder="Rua, número, bairro">
+        </div>
+        <div class="form-group span-3">
+          <label>Observações</label>
+          <textarea name="observacoes" rows="2" placeholder="Informações adicionais..."><%= pessoa?.observacoes || '' %></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+    <a href="/pessoas" class="btn btn-outline"><i class="fas fa-times"></i> Cancelar</a>
+    <button type="submit" class="btn btn-primary btn-lg"><i class="fas fa-save"></i> <%= pessoa ? 'Salvar Alterações' : 'Cadastrar' %></button>
+  </div>
+</form>
+
+<%- include('../partials/footer') %>

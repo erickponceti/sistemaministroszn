@@ -1,0 +1,181 @@
+<%- include('../partials/header', {page:'checklists'}) %>
+
+<div class="breadcrumb">
+  <a href="/checklists"><i class="fas fa-clipboard-check"></i> Checklists</a>
+  <i class="fas fa-chevron-right"></i>
+  <span><%= tipo === 'checkin' ? 'Check-in' : 'Check-out' %></span>
+</div>
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>
+      <i class="fas fa-sign-<%= tipo === 'checkin' ? 'in' : 'out' %>-alt" style="color:<%= tipo === 'checkin' ? 'var(--success)' : 'var(--info)' %>"></i>
+      <%= tipo === 'checkin' ? '🔑 Check-in do Veículo' : '🚪 Check-out do Veículo' %>
+    </h1>
+    <p><%= tipo === 'checkin' ? 'Registro de inspeção na entrega do veículo ao locatário' : 'Registro de inspeção na devolução do veículo' %></p>
+  </div>
+</div>
+
+<% if (aluguel) { %>
+<div class="card" style="margin-bottom:20px;border-left:4px solid var(<%= tipo === 'checkin' ? '--success' : '--info' %>);">
+  <div class="card-body" style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
+    <div>
+      <small style="color:#94A3B8;display:block;">VEÍCULO</small>
+      <strong><span class="placa-badge"><%= aluguel.placa %></span> <%= aluguel.marca %> <%= aluguel.modelo %></strong>
+    </div>
+    <div>
+      <small style="color:#94A3B8;display:block;">LOCATÁRIO</small>
+      <strong><%= aluguel.cliente_nome %></strong>
+    </div>
+    <div>
+      <small style="color:#94A3B8;display:block;">KM ATUAL NO SISTEMA</small>
+      <strong class="km-display"><%= aluguel.km_atual ? aluguel.km_atual.toLocaleString('pt-BR') + ' km' : '—' %></strong>
+    </div>
+    <div>
+      <small style="color:#94A3B8;display:block;">PERÍODO</small>
+      <strong><%= new Date(aluguel.data_inicio).toLocaleDateString('pt-BR') %> → <%= new Date(aluguel.data_fim_prevista).toLocaleDateString('pt-BR') %></strong>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<form action="/checklists" method="POST">
+  <input type="hidden" name="tipo" value="<%= tipo %>">
+
+  <% if (!aluguel) { %>
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-header"><div class="card-title"><i class="fas fa-link"></i> Vincular ao Aluguel</div></div>
+    <div class="card-body">
+      <% if (alugueis.length === 0) { %>
+      <div class="alert alert-warning" style="margin:0;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Nenhum contrato encontrado.</strong> Crie um aluguel antes de registrar o checklist.
+        <a href="/alugueis/novo" class="btn btn-primary btn-sm" style="margin-left:12px;"><i class="fas fa-plus"></i> Novo Aluguel</a>
+      </div>
+      <% } else { %>
+      <div class="form-row form-row-2">
+        <div class="form-group">
+          <label>Aluguel <span class="req">*</span></label>
+          <select name="aluguel_id" required>
+            <option value="">— Selecionar contrato —</option>
+            <% const ativos2    = alugueis.filter(a => a.status === 'ativo' || a.status === 'atrasado'); %>
+            <% const encerrados2 = alugueis.filter(a => a.status === 'encerrado'); %>
+            <% if (ativos2.length > 0) { %>
+            <optgroup label="Contratos Ativos">
+              <% ativos2.forEach(a => { %>
+              <option value="<%= a.id %>">[ATIVO] <%= a.placa %> — <%= a.modelo %> | <%= a.cliente_nome %></option>
+              <% }) %>
+            </optgroup>
+            <% } %>
+            <% if (encerrados2.length > 0) { %>
+            <optgroup label="Encerrados (checkout pendente)">
+              <% encerrados2.forEach(a => { %>
+              <option value="<%= a.id %>">[ENCERRADO] <%= a.placa %> — <%= a.modelo %> | <%= a.cliente_nome %></option>
+              <% }) %>
+            </optgroup>
+            <% } %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tipo</label>
+          <select name="tipo">
+            <option value="checkin" <%= tipo === 'checkin' ? 'selected' : '' %>>Check-in (Entrega ao Cliente)</option>
+            <option value="checkout" <%= tipo === 'checkout' ? 'selected' : '' %>>Check-out (Devolução do Cliente)</option>
+          </select>
+        </div>
+      </div>
+      <% } %>
+    </div>
+  </div>
+  <% } else { %>
+  <input type="hidden" name="aluguel_id" value="<%= aluguel_id %>">
+  <% } %>
+
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-tachometer-alt"></i> KM e Data</div>
+    </div>
+    <div class="card-body">
+      <div class="form-row form-row-2">
+        <div class="form-group">
+          <label>KM do Veículo no Momento <span class="req">*</span></label>
+          <input type="number" name="km_veiculo" placeholder="Ex: 45230" required min="0">
+        </div>
+        <div class="form-group">
+          <label>Observações Gerais</label>
+          <input type="text" name="observacoes" placeholder="Alguma observação importante...">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHECKLIST ITEMS -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-header">
+      <div class="card-title" style="color:<%= tipo === 'checkin' ? 'var(--success)' : 'var(--info)' %>">
+        <i class="fas fa-clipboard-list"></i>
+        Inspeção Completa do Veículo —
+        <span style="background:<%= tipo === 'checkin' ? '#D1FAE5' : '#EEF2FF' %>;color:<%= tipo === 'checkin' ? '#065F46' : '#4338CA' %>;padding:2px 10px;border-radius:12px;font-size:13px;">
+          <%= tipo === 'checkin' ? '🔑 CHECK-IN' : '🚪 CHECK-OUT' %>
+        </span>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <% // Group items into sections
+      const secoes = [
+        { titulo: '💡 Iluminação', icone: 'lightbulb', campos: ['lampadas_dianteiras','lampadas_traseiras','farol_principal','farol_milha'] },
+        { titulo: '🚗 Pneus', icone: 'circle', campos: ['pneu_dianteiro_esq','pneu_dianteiro_dir','pneu_traseiro_esq','pneu_traseiro_dir','pneu_estepe'] },
+        { titulo: '⚙️ Motor e Fluidos', icone: 'cog', campos: ['motor','nivel_oleo','nivel_agua'] },
+        { titulo: '🚪 Portas e Maçanetas', icone: 'door-open', campos: ['macaneta_esquerda','macaneta_direita','macaneta_traseira_esq','macaneta_traseira_dir'] },
+        { titulo: '⛽ Combustível e Lataria', icone: 'gas-pump', campos: ['tanque_combustivel','lataria','vidros','espelhos','interior_limpeza'] },
+        { titulo: '📄 Documentos e Acessórios', icone: 'file-alt', campos: ['documentacao','triangulo','macaco','chave_roda'] }
+      ];
+      %>
+
+      <% secoes.forEach(secao => { %>
+      <div class="section-title" style="margin-top:20px;margin-bottom:12px;">
+        <i class="fas fa-<%= secao.icone %>"></i> <%= secao.titulo %>
+      </div>
+      <div class="checklist-grid">
+        <% secao.campos.forEach(campoKey => {
+          const campo = campos.find(c => c.key === campoKey);
+          if (!campo) return;
+        %>
+        <div class="checklist-item">
+          <div class="checklist-item-label">
+            <i class="fas fa-check-square" style="color:var(--primary);"></i>
+            <%= campo.label %>
+          </div>
+          <div class="checklist-options">
+            <% campo.opcoes.forEach((opcao, idx) => { %>
+            <div class="check-opt">
+              <input type="radio" id="<%= campo.key %>_<%= idx %>" name="<%= campo.key %>" value="<%= opcao %>">
+              <label for="<%= campo.key %>_<%= idx %>"><%= opcao %></label>
+            </div>
+            <% }) %>
+          </div>
+        </div>
+        <% }) %>
+      </div>
+      <% }) %>
+
+      <div style="margin-top:20px;">
+        <div class="form-group">
+          <label><i class="fas fa-comment-alt"></i> Observações Detalhadas</label>
+          <textarea name="observacoes" rows="4" placeholder="Descreva qualquer avaria, dano ou observação relevante sobre o veículo..."></textarea>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;justify-content:flex-end;padding:20px 0;">
+    <a href="/alugueis" class="btn btn-outline btn-lg"><i class="fas fa-times"></i> Cancelar</a>
+    <button type="submit" class="btn btn-<%= tipo === 'checkin' ? 'success' : 'primary' %> btn-lg">
+      <i class="fas fa-save"></i> Salvar <%= tipo === 'checkin' ? 'Check-in' : 'Check-out' %>
+    </button>
+  </div>
+</form>
+
+<%- include('../partials/footer') %>

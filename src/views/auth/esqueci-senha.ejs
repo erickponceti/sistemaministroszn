@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height:100%; font-family:'Plus Jakarta Sans',sans-serif; }
+    body { display:flex; min-height:100vh; background:#0F172A; }
+
+    .left-panel {
+      flex:1; position:relative; overflow:hidden;
+      display:flex; flex-direction:column; justify-content:flex-end; padding:48px;
+      background:linear-gradient(145deg,#0F172A 0%,#1E3A5F 40%,#0C4A6E 70%,#164E63 100%);
+    }
+    .left-panel::before { content:''; position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.06) 1px,transparent 1px); background-size:28px 28px; pointer-events:none; }
+    .deco { position:absolute; border-radius:50%; pointer-events:none; }
+    .d1 { width:400px; height:400px; top:-120px; right:-100px; background:radial-gradient(circle,rgba(37,99,235,0.25) 0%,transparent 70%); }
+
+    .left-bottom { position:relative; z-index:2; }
+    .left-brand { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+    .left-brand-icon { width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg,#2563EB,#1D4ED8); display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; box-shadow:0 8px 24px rgba(37,99,235,0.5); }
+    .left-brand-name { font-size:22px; font-weight:800; color:#fff; }
+    .left-brand-sub  { font-size:11px; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:1px; }
+    .left-tagline { font-size:28px; font-weight:800; color:#fff; line-height:1.25; letter-spacing:-0.5px; margin-bottom:10px; }
+    .left-tagline span { color:#38BDF8; }
+    .left-desc { font-size:14px; color:rgba(255,255,255,0.55); line-height:1.6; max-width:340px; }
+
+    .right-panel { width:460px; flex-shrink:0; background:#fff; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:48px 52px; }
+
+    .form-wrap { width:100%; max-width:360px; }
+    .back-link { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:#64748B; text-decoration:none; margin-bottom:28px; transition:color 0.2s; }
+    .back-link:hover { color:#2563EB; }
+    .form-eyebrow { display:inline-flex; align-items:center; gap:6px; background:#EFF6FF; color:#2563EB; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; padding:4px 12px; border-radius:20px; margin-bottom:20px; }
+    .form-title { font-size:26px; font-weight:800; color:#0F172A; letter-spacing:-0.5px; margin-bottom:6px; }
+    .form-subtitle { font-size:13.5px; color:#64748B; margin-bottom:32px; line-height:1.5; }
+    .alert { padding:11px 14px; border-radius:9px; margin-bottom:18px; display:flex; align-items:flex-start; gap:9px; font-size:13px; font-weight:500; border:1px solid transparent; }
+    .alert-success { background:#ECFDF5; color:#059669; border-color:rgba(5,150,105,0.2); }
+    .alert-danger  { background:#FEF2F2; color:#DC2626; border-color:rgba(220,38,38,0.2); }
+    .field { margin-bottom:18px; }
+    .field label { display:block; font-size:11.5px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+    .input-wrap { position:relative; }
+    .input-wrap i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#94A3B8; font-size:14px; pointer-events:none; }
+    .input-wrap input { width:100%; padding:12px 14px 12px 42px; border:1.5px solid #E2E8F0; border-radius:10px; font-family:'Plus Jakarta Sans',sans-serif; font-size:14px; color:#0F172A; background:#FAFAFA; outline:none; transition:all 0.2s; }
+    .input-wrap input::placeholder { color:#CBD5E1; }
+    .input-wrap input:focus { border-color:#2563EB; background:#fff; box-shadow:0 0 0 4px rgba(37,99,235,0.08); }
+    .btn-submit { width:100%; padding:13px; background:linear-gradient(135deg,#2563EB,#1D4ED8); color:#fff; border:none; border-radius:10px; font-family:'Plus Jakarta Sans',sans-serif; font-size:14.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 16px rgba(37,99,235,0.35); transition:all 0.2s; }
+    .btn-submit:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(37,99,235,0.45); }
+    @media (max-width:900px) { .left-panel { display:none; } .right-panel { width:100%; padding:40px 28px; } }
+  </style>
+</head>
+<body>
+<div class="left-panel">
+  <div class="deco d1"></div>
+  <div class="left-bottom">
+    <div class="left-brand">
+      <div class="left-brand-icon"><i class="fas fa-car-side"></i></div>
+      <div>
+        <div class="left-brand-name">ZeloFrota</div>
+        <div class="left-brand-sub">Gestão de Frota</div>
+      </div>
+    </div>
+    <div class="left-tagline">Recupere seu<br><span>acesso agora.</span></div>
+    <p class="left-desc">Enviaremos as instruções de redefinição de senha para o seu e-mail cadastrado.</p>
+  </div>
+</div>
+
+<div class="right-panel">
+  <div class="form-wrap">
+    <a href="/login" class="back-link"><i class="fas fa-arrow-left"></i> Voltar ao login</a>
+    <div class="form-eyebrow"><i class="fas fa-envelope"></i> Recuperação</div>
+    <h1 class="form-title">Esqueceu a senha?</h1>
+    <p class="form-subtitle">Informe seu e-mail cadastrado e enviaremos as instruções para redefinir sua senha.</p>
+
+    <% if (success_msg && success_msg.length > 0) { %>
+      <div class="alert alert-success"><i class="fas fa-check-circle"></i> <%= success_msg %></div>
+    <% } %>
+    <% if (error_msg && error_msg.length > 0) { %>
+      <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> <%= error_msg %></div>
+    <% } %>
+
+    <form action="/esqueci-senha" method="POST">
+      <div class="field">
+        <label>E-mail cadastrado</label>
+        <div class="input-wrap">
+          <input type="email" name="email" placeholder="seu@email.com" required autocomplete="email">
+          <i class="fas fa-envelope"></i>
+        </div>
+      </div>
+      <button type="submit" class="btn-submit"><i class="fas fa-paper-plane"></i> Enviar instruções</button>
+    </form>
+  </div>
+</div>
+</body>
+</html>

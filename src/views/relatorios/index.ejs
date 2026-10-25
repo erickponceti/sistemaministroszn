@@ -1,0 +1,65 @@
+<%- include('../partials/header', {page:'relatorios'}) %>
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1><i class="fas fa-file-chart-bar" style="color:var(--primary)"></i> Relatórios</h1>
+    <p>Análises e exportações gerenciais da frota</p>
+  </div>
+</div>
+
+<div class="charts-grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));margin-bottom:24px;">
+  <a href="/veiculos" class="stat-card" style="flex-direction:column;align-items:flex-start;gap:10px;text-decoration:none;">
+    <div class="stat-icon blue"><i class="fas fa-car"></i></div>
+    <div>
+      <div style="font-weight:700;font-size:15px;">Relatório de Frota</div>
+      <div style="color:#64748B;font-size:13px;margin-top:2px;">Todos os veículos cadastrados com status e KM</div>
+    </div>
+  </a>
+  <a href="/alugueis" class="stat-card" style="flex-direction:column;align-items:flex-start;gap:10px;text-decoration:none;">
+    <div class="stat-icon green"><i class="fas fa-key"></i></div>
+    <div>
+      <div style="font-weight:700;font-size:15px;">Contratos Ativos</div>
+      <div style="color:#64748B;font-size:13px;margin-top:2px;">Todos os aluguéis em andamento</div>
+    </div>
+  </a>
+  <a href="/pagamentos" class="stat-card" style="flex-direction:column;align-items:flex-start;gap:10px;text-decoration:none;">
+    <div class="stat-icon yellow"><i class="fas fa-money-bill-wave"></i></div>
+    <div>
+      <div style="font-weight:700;font-size:15px;">Receitas</div>
+      <div style="color:#64748B;font-size:13px;margin-top:2px;">Histórico completo de pagamentos</div>
+    </div>
+  </a>
+  <a href="/manutencoes" class="stat-card" style="flex-direction:column;align-items:flex-start;gap:10px;text-decoration:none;">
+    <div class="stat-icon red"><i class="fas fa-wrench"></i></div>
+    <div>
+      <div style="font-weight:700;font-size:15px;">Custos de Manutenção</div>
+      <div style="color:#64748B;font-size:13px;margin-top:2px;">Todos os serviços e despesas</div>
+    </div>
+  </a>
+  <a href="/checklists" class="stat-card" style="flex-direction:column;align-items:flex-start;gap:10px;text-decoration:none;">
+    <div class="stat-icon purple"><i class="fas fa-clipboard-check"></i></div>
+    <div>
+      <div style="font-weight:700;font-size:15px;">Auditoria de Checklists</div>
+      <div style="color:#64748B;font-size:13px;margin-top:2px;">Histórico de inspeções e comparativos</div>
+    </div>
+  </a>
+  <a href="/dashboard" class="stat-card" style="flex-direction:column;align-items:flex-start;gap:10px;text-decoration:none;">
+    <div class="stat-icon dark"><i class="fas fa-chart-pie"></i></div>
+    <div>
+      <div style="font-weight:700;font-size:15px;">Dashboard Executivo</div>
+      <div style="color:#64748B;font-size:13px;margin-top:2px;">Visão geral com gráficos e KPIs</div>
+    </div>
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-header"><div class="card-title"><i class="fas fa-info-circle"></i> Módulo de Relatórios em Expansão</div></div>
+  <div class="card-body" style="text-align:center;padding:40px;">
+    <i class="fas fa-chart-bar" style="font-size:48px;color:var(--primary);opacity:0.4;"></i>
+    <h3 style="margin-top:16px;color:var(--text-secondary);">Exportação PDF/Excel em breve</h3>
+    <p style="color:var(--text-muted);margin-top:8px;">Utilize o Dashboard para visualizar os gráficos e métricas em tempo real.<br>A exportação avançada será liberada na próxima versão.</p>
+    <a href="/dashboard" class="btn btn-primary" style="margin-top:20px;"><i class="fas fa-chart-pie"></i> Ir ao Dashboard</a>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

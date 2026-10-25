@@ -1,0 +1,47 @@
+<%- include('../partials/header') %>
+
+<div class="breadcrumb">
+  <a href="/igrejas"><i class="fas fa-church"></i> Igrejas</a>
+  <i class="fas fa-chevron-right" style="font-size:10px"></i>
+  <span><%= igreja ? 'Editar' : 'Nova Igreja' %></span>
+</div>
+
+<div class="card" style="max-width:600px">
+  <div class="card-header">
+    <div class="card-title"><%= igreja ? 'Editar Igreja' : 'Cadastrar Nova Igreja' %></div>
+  </div>
+
+  <form action="<%= igreja ? '/igrejas/' + igreja.id : '/igrejas' %>" method="POST">
+    <div class="form-row">
+      <div class="form-group" style="grid-column:1/3">
+        <label class="form-label">Nome da Igreja *</label>
+        <input type="text" name="nome" class="form-control" required
+          value="<%= igreja ? igreja.nome : '' %>" placeholder="Ex: Igreja Central">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sigla *</label>
+        <input type="text" name="sigla" class="form-control" required maxlength="20"
+          value="<%= igreja ? igreja.sigla : '' %>" placeholder="Ex: IC" style="text-transform:uppercase">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Pastor Responsável *</label>
+        <input type="text" name="pastor_responsavel" class="form-control" required
+          value="<%= igreja ? igreja.pastor_responsavel : '' %>" placeholder="Nome do pastor">
+      </div>
+      <div class="form-group" style="grid-column:1/3">
+        <label class="form-label">Endereço</label>
+        <textarea name="endereco" class="form-control" rows="2"
+          placeholder="Rua, número, bairro, cidade"><%= igreja ? (igreja.endereco || '') : '' %></textarea>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i> <%= igreja ? 'Salvar Alterações' : 'Cadastrar Igreja' %>
+      </button>
+      <a href="/igrejas" class="btn btn-outline"><i class="fas fa-times"></i> Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<%- include('../partials/footer') %>

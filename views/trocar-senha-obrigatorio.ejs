@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Definir Nova Senha — SMZN · Sistema de Ministros Zona Norte</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body { background:radial-gradient(circle at 50% 30%, #1C6FC0 0%, #01539D 45%, #0B2545 100%); display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
+    .box { background:#F7FAFE; border-top:6px solid #01539D; border-radius:20px; padding:40px; width:100%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,.35); }
+    .box-logo { text-align:center; margin-bottom:20px; }
+    .box-logo img { max-width:160px; }
+    .aviso { background:#fff3e0; border:1px solid #ffe0b2; border-radius:12px; padding:14px 16px; margin-bottom:20px; display:flex; align-items:flex-start; gap:10px; }
+    .aviso i { color:#f57c00; font-size:20px; margin-top:2px; }
+    .aviso-txt strong { display:block; font-size:14px; color:#e65100; font-weight:800; }
+    .aviso-txt span   { font-size:12px; color:#bf360c; }
+    .box h2 { font-size:20px; font-weight:900; color:#01539D; margin-bottom:20px; }
+    .alert-error { background:#fee2e2; border:1px solid #fecaca; color:#991b1b; border-radius:10px; padding:12px 16px; font-size:13px; font-weight:600; margin-bottom:16px; }
+    .btn-block { width:100%; padding:13px; background:#01539D; color:#fff; border:none; border-radius:10px; font-family:'Nunito',sans-serif; font-size:15px; font-weight:800; cursor:pointer; margin-top:8px; }
+    .btn-block:hover { background:#1C6FC0; }
+    .pw-wrap { position:relative; }
+    .pw-wrap .form-control { padding-right:42px; }
+    .pw-eye { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#718096; }
+    .box-logo img { max-width:150px; height:auto; mix-blend-mode:multiply; }
+    .box-brand { text-align:center; margin:-10px 0 20px; }
+    .bb-sigla { font-size:22px; font-weight:900; letter-spacing:3px; color:#01539D; }
+    .bb-nome { font-size:12px; font-weight:700; color:#5A6B82; letter-spacing:.5px; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="box-logo"><img src="/img/logo.png" alt="SMZN — Sistema de Ministros Zona Norte"></div>
+    <div class="box-brand"><div class="bb-sigla">SMZN</div><div class="bb-nome">Sistema de Ministros Zona Norte</div></div>
+
+    <div class="aviso">
+      <i class="fas fa-shield-alt"></i>
+      <div class="aviso-txt">
+        <strong>Primeiro acesso detectado</strong>
+        <span>Por seguranca, voce precisa definir uma nova senha antes de continuar.</span>
+      </div>
+    </div>
+
+    <h2>Defina sua nova senha</h2>
+
+    <% if (erro) { %><div class="alert-error"><i class="fas fa-exclamation-circle"></i> <%= erro %></div><% } %>
+
+    <form action="/trocar-senha-obrigatorio" method="POST">
+      <div class="form-group">
+        <label class="form-label">Nova senha *</label>
+        <div class="pw-wrap">
+          <input type="password" name="senha" id="s1" class="form-control" placeholder="Minimo 6 caracteres" required autofocus>
+          <button type="button" class="pw-eye" onclick="toggle('s1',this)"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirmar nova senha *</label>
+        <div class="pw-wrap">
+          <input type="password" name="confirmar" id="s2" class="form-control" placeholder="Repita a nova senha" required>
+          <button type="button" class="pw-eye" onclick="toggle('s2',this)"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
+      <button type="submit" class="btn-block"><i class="fas fa-check"></i> Salvar e continuar</button>
+    </form>
+  </div>
+  <script>
+  function toggle(id, btn) {
+    var f = document.getElementById(id);
+    f.type = f.type === 'password' ? 'text' : 'password';
+    btn.innerHTML = f.type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+  }
+  </script>
+</body>
+</html>

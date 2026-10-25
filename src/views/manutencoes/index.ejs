@@ -1,0 +1,36 @@
+<%- include('../partials/header', {page:'manutencoes'}) %>
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1><i class="fas fa-wrench" style="color:var(--warning)"></i> Manutenções</h1>
+    <p>Controle de serviços e custos de manutenção da frota</p>
+  </div>
+  <div class="page-header-actions">
+    <a href="/manutencoes/novo" class="btn btn-warning"><i class="fas fa-plus"></i> Nova Manutenção</a>
+  </div>
+</div>
+
+<div class="table-wrapper">
+  <% if (manutencoes.length === 0) { %>
+  <div class="empty-state"><i class="fas fa-wrench"></i><p>Nenhuma manutenção registrada.</p></div>
+  <% } else { %>
+  <table>
+    <thead><tr><th>Veículo</th><th>Tipo</th><th>Data</th><th>Descrição</th><th>Valor</th><th>Fornecedor</th><th>Próx. Revisão</th></tr></thead>
+    <tbody>
+      <% manutencoes.forEach(m => { %>
+      <tr>
+        <td><span class="placa-badge"><%= m.placa %></span> <span style="font-size:12px;color:#64748B;"><%= m.modelo %></span></td>
+        <td><strong><%= m.tipo %></strong></td>
+        <td><%= new Date(m.data_manutencao).toLocaleDateString('pt-BR') %></td>
+        <td><%= m.descricao || '—' %></td>
+        <td><% if (m.valor) { %><strong style="color:var(--danger)">R$ <%= parseFloat(m.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}) %></strong><% } else { %>—<% } %></td>
+        <td><%= m.fornecedor_nome || '—' %></td>
+        <td><% if (m.proxima_data) { %><span class="badge badge-warning"><%= new Date(m.proxima_data).toLocaleDateString('pt-BR') %></span><% } else if (m.proximo_km) { %><span class="km-display"><%= m.proximo_km.toLocaleString('pt-BR') %> km</span><% } else { %>—<% } %></td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

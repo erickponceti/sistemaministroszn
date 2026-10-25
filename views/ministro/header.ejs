@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — SMZN</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .min-sidebar { background:#fff; border-right:1px solid var(--border); box-shadow:2px 0 8px rgba(0,0,0,.05); }
+    .min-header  { background:var(--primary); }
+    .min-badge   { background:var(--cream); color:var(--primary); border-radius:20px; padding:3px 10px; font-size:11px; font-weight:700; }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <aside class="sidebar min-sidebar">
+    <div class="sidebar-logo">
+      <img src="/img/logo.png" alt="SMZN — Sistema de Ministros Zona Norte" class="logo-img">
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/ministro" class="nav-item <%= title === 'Minha Area' ? 'active' : '' %>">
+        <i class="fas fa-home"></i><span>Minha Area</span>
+      </a>
+      <div class="nav-section">ESCALAS</div>
+      <a href="/ministro" class="nav-item nav-sub">
+        <i class="fas fa-calendar-alt"></i><span>Minhas Escalas</span>
+      </a>
+      <div class="nav-section">CONTA</div>
+      <a href="/ministro/perfil" class="nav-item nav-sub <%= title === 'Meu Perfil' ? 'active' : '' %>">
+        <i class="fas fa-user-edit"></i><span>Meu Perfil</span>
+      </a>
+      <a href="/ministro/logout" class="nav-item nav-sub" style="color:var(--accent-red)">
+        <i class="fas fa-sign-out-alt"></i><span>Sair</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <% if (typeof ministroLogado !== 'undefined' && ministroLogado) { %>
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" style="background:var(--primary)"><%= ministroLogado.nome.charAt(0).toUpperCase() %></div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name"><%= ministroLogado.nome %></div>
+          <div class="sidebar-user-perfil perfil-user">Ministro</div>
+        </div>
+      </div>
+      <% } %>
+      <div class="footer-brand"><span class="brand-name">SMZN</span><span class="brand-sub">Sistema de Ministros Zona Norte</span></div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar min-header" style="background:var(--primary);border-bottom:1px solid rgba(255,255,255,.1)">
+      <div class="topbar-left">
+        <h1 class="page-title" style="color:#fff"><%= title %></h1>
+      </div>
+      <div class="topbar-right">
+        <% if (typeof ministroLogado !== 'undefined' && ministroLogado) { %>
+        <div class="topbar-user" style="color:rgba(255,255,255,.8)">
+          <i class="fas fa-user-circle" style="color:#fff"></i>
+          <span><%= ministroLogado.nome %></span>
+          <span class="min-badge">Ministro</span>
+        </div>
+        <% } %>
+      </div>
+    </header>
+    <div class="content-area">

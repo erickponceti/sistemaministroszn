@@ -1,0 +1,51 @@
+<%- include('header') %>
+
+<div class="breadcrumb">
+  <a href="/ministro"><i class="fas fa-home"></i> Minha Area</a>
+  <i class="fas fa-chevron-right" style="font-size:10px"></i>
+  <span>Meu Perfil</span>
+</div>
+
+<% if (sucesso) { %>
+  <div class="alert alert-success"><i class="fas fa-check-circle"></i> <%= sucesso %></div>
+<% } %>
+<% if (erro) { %>
+  <div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> <%= erro %></div>
+<% } %>
+
+<div class="card" style="max-width:520px">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-user-edit" style="color:var(--primary)"></i> Meus Dados</div>
+  </div>
+
+  <form action="/ministro/perfil" method="POST">
+    <div class="form-group">
+      <label class="form-label">Nome</label>
+      <input type="text" name="nome" class="form-control" required value="<%= ministro.nome %>">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Telefone / Telegram</label>
+      <input type="tel" name="telefone" class="form-control" value="<%= ministro.telefone || '' %>" placeholder="81 9 8234-9298">
+    </div>
+    <div class="form-group">
+      <label class="form-label">E-mail de acesso</label>
+      <input type="email" class="form-control" value="<%= ministro.email_acesso || '' %>" disabled style="background:#f8fafc;color:var(--text-light)">
+      <div style="font-size:11px;color:var(--text-light);margin-top:4px"><i class="fas fa-info-circle"></i> Para alterar o email, contate o administrador.</div>
+    </div>
+
+    <!-- Info somente leitura -->
+    <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:18px">
+      <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-light);margin-bottom:10px">Informacoes cadastrais</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+        <div><span style="color:var(--text-light)">Igreja:</span><br><strong><%= ministro.nome_igreja || 'Nao vinculado' %></strong></div>
+        <div><span style="color:var(--text-light)">Chamado:</span><br><strong><%= ministro.chamado || '—' %></strong></div>
+        <div><span style="color:var(--text-light)">Licenciado:</span><br><strong><%= ministro.licenciado ? 'Sim' : 'Nao' %></strong></div>
+        <div><span style="color:var(--text-light)">Ordenado:</span><br><strong><%= ministro.ordenado ? 'Sim' : 'Nao' %></strong></div>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Salvar Alteracoes</button>
+  </form>
+</div>
+
+<%- include('footer') %>

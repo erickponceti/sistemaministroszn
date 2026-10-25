@@ -1,0 +1,39 @@
+<%- include('../partials/header', {page:'pagamentos'}) %>
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1><i class="fas fa-money-bill-wave" style="color:var(--success)"></i> Pagamentos</h1>
+    <p>Histórico de todos os recebimentos</p>
+  </div>
+  <div class="page-header-actions">
+    <a href="/pagamentos/novo" class="btn btn-success"><i class="fas fa-plus"></i> Registrar Pagamento</a>
+  </div>
+</div>
+
+<div class="table-wrapper">
+  <% if (pagamentos.length === 0) { %>
+  <div class="empty-state"><i class="fas fa-money-bill"></i><p>Nenhum pagamento registrado.</p></div>
+  <% } else { %>
+  <table>
+    <thead><tr><th>Data</th><th>Veículo</th><th>Cliente</th><th>Valor</th><th>Forma</th><th>Referência</th><th>Obs.</th></tr></thead>
+    <tbody>
+      <% pagamentos.forEach(p => { %>
+      <tr>
+        <td><strong><%= new Date(p.data_pagamento).toLocaleDateString('pt-BR') %></strong></td>
+        <td><span class="placa-badge"><%= p.placa %></span> <span style="font-size:12px;color:#64748B;"><%= p.modelo %></span></td>
+        <td><%= p.cliente_nome %></td>
+        <td><strong style="color:var(--success);font-size:15px;">R$ <%= parseFloat(p.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}) %></strong></td>
+        <td>
+          <% const icones = {pix:'fa-qrcode',dinheiro:'fa-money-bill',cartao:'fa-credit-card',transferencia:'fa-exchange-alt'}; %>
+          <span><i class="fas <%= icones[p.forma_pagamento] || 'fa-receipt' %>"></i> <%= p.forma_pagamento || '—' %></span>
+        </td>
+        <td><%= p.referencia_semana ? 'Semana de ' + new Date(p.referencia_semana).toLocaleDateString('pt-BR') : '—' %></td>
+        <td><%= p.observacoes || '—' %></td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

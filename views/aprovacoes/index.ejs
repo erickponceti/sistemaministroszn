@@ -1,0 +1,326 @@
+<%- include('../partials/header') %>
+
+<!-- Filtros -->
+<div class="card" style="margin-bottom:20px;padding:18px 24px">
+  <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
+    <div style="flex:0 0 160px">
+      <label class="form-label">Status</label>
+      <select id="filtro-status" class="form-control" onchange="aplicarFiltro()">
+        <option value="pendente"  <%= filtros.status === 'pendente'  ? 'selected' : '' %>>Pendentes</option>
+        <option value="aprovado"  <%= filtros.status === 'aprovado'  ? 'selected' : '' %>>Aprovados</option>
+        <option value="rejeitado" <%= filtros.status === 'rejeitado' ? 'selected' : '' %>>Rejeitados</option>
+        <option value="todos"     <%= filtros.status === 'todos'     ? 'selected' : '' %>>Todos</option>
+      </select>
+    </div>
+    <div style="flex:1;min-width:180px">
+      <label class="form-label">Igreja</label>
+      <select id="filtro-igreja" class="form-control" onchange="aplicarFiltro()">
+        <option value="">Todas as igrejas</option>
+        <% igrejas.forEach(function(ig) { %>
+          <option value="<%= ig.id %>" <%= filtros.igreja == ig.id ? 'selected' : '' %>><%= ig.nome %></option>
+        <% }); %>
+      </select>
+    </div>
+    <div>
+      <label class="form-label">&nbsp;</label>
+      <button class="btn btn-outline" onclick="window.location='/aprovacoes'"><i class="fas fa-times"></i> Limpar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Contadores -->
+<div class="stats-grid" style="margin-bottom:20px">
+  <div class="stat-card">
+    <div class="stat-icon orange"><i class="fas fa-clock"></i></div>
+    <div>
+      <div class="stat-number"><%= escalas.filter(function(e){ return e.status==='pendente'; }).length %></div>
+      <div class="stat-label">Pendentes</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+    <div>
+      <div class="stat-number"><%= escalas.filter(function(e){ return e.status==='aprovado'; }).length %></div>
+      <div class="stat-label">Aprovados</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#fee2e2;color:#dc2626"><i class="fas fa-times-circle"></i></div>
+    <div>
+      <div class="stat-number"><%= escalas.filter(function(e){ return e.status==='rejeitado'; }).length %></div>
+      <div class="stat-label">Rejeitados</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fas fa-list"></i></div>
+    <div>
+      <div class="stat-number"><%= escalas.length %></div>
+      <div class="stat-label">Total exibido</div>
+    </div>
+  </div>
+</div>
+
+<!-- Grid -->
+<% if (escalas.length === 0) { %>
+  <div class="card">
+    <div class="empty-state">
+      <i class="fas fa-check-circle"></i>
+      <p>Nenhuma escala encontrada para este filtro.</p>
+    </div>
+  </div>
+<% } else { %>
+<div class="card" style="padding:0">
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Turno</th>
+          <th>Igreja</th>
+          <th>Ministro</th>
+          <th>Tema</th>
+          <th>Status</th>
+          <th style="text-align:center">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%
+          var chamadoClass = {
+            'Apóstolo':'apostolo',
+            'Evangelista':'evangelista',
+            'Pastor':'pastor',
+            'Mestre':'mestre',
+            'Profeta':'profeta'
+          };
+        %>
+        <% escalas.forEach(function(e) {
+          var d = new Date(e.data);
+          d.setHours(12);
+          var dateStr = d.toLocaleDateString('pt-BR', {weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'});
+          var temaSeguro = (e.tema || '').replace(/"/g, '&quot;');
+          var obsSeguro  = (e.obs  || '').replace(/"/g, '&quot;');
+          var motivoSeguro = (e.motivo_rejeicao || '').replace(/"/g, '&quot;');
+          var ministroSeguro = (e.ministro_nome || '').replace(/"/g, '&quot;');
+          var igrejaSeguro   = (e.igreja_nome   || '').replace(/"/g, '&quot;');
+          var classChamado = chamadoClass[e.chamado] || 'pastor';
+        %>
+        <tr id="row-<%= e.id %>">
+          <td style="font-weight:700;white-space:nowrap"><%= dateStr %></td>
+          <td>
+            <% if(e.turno==='Manhã') { %>
+              <span style="color:#f59e0b;font-weight:700;font-size:12px"><i class="fas fa-sun"></i> Manhã</span>
+            <% } else if(e.turno==='Tarde') { %>
+              <span style="color:#C2410C;font-weight:700;font-size:12px"><i class="fas fa-cloud-sun"></i> Tarde</span>
+            <% } else { %>
+              <span style="color:#01539D;font-weight:700;font-size:12px"><i class="fas fa-moon"></i> Noite</span>
+            <% } %>
+          </td>
+          <td>
+            <div style="font-weight:700;font-size:13px"><%= e.igreja_nome %></div>
+            <div style="font-size:11px;color:#718096"><%= e.igreja_sigla %></div>
+          </td>
+          <td>
+            <div style="font-weight:700"><%= e.ministro_nome %></div>
+            <span class="badge badge-<%= classChamado %>" style="font-size:10px"><%= e.chamado %></span>
+          </td>
+          <td style="color:#4a5568;font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            <%= e.tema || '—' %>
+          </td>
+          <td id="status-<%= e.id %>">
+            <% if(e.status === 'pendente') { %>
+              <span class="status-badge pendente"><i class="fas fa-clock"></i> Pendente</span>
+            <% } else if(e.status === 'aprovado') { %>
+              <span class="status-badge aprovado"><i class="fas fa-check-circle"></i> Aprovado</span>
+              <% if(e.aprovado_por_nome) { %>
+                <div style="font-size:11px;color:#718096;margin-top:3px">por <%= e.aprovado_por_nome %></div>
+              <% } %>
+            <% } else { %>
+              <span class="status-badge rejeitado"><i class="fas fa-times-circle"></i> Rejeitado</span>
+              <% if(e.motivo_rejeicao) { %>
+                <div style="font-size:11px;color:#dc2626;margin-top:3px"><%= e.motivo_rejeicao.substring(0,40) %></div>
+              <% } %>
+            <% } %>
+          </td>
+          <td style="text-align:center">
+            <button class="btn-acao"
+              data-id="<%= e.id %>"
+              data-ministro="<%= ministroSeguro %>"
+              data-igreja="<%= igrejaSeguro %>"
+              data-data="<%= dateStr %>"
+              data-turno="<%= e.turno %>"
+              data-tema="<%= temaSeguro %>"
+              data-obs="<%= obsSeguro %>"
+              data-status="<%= e.status %>"
+              data-motivo="<%= motivoSeguro %>"
+              onclick="verDetalhe(this)"
+              title="Ver detalhes">
+              <i class="fas fa-cog"></i>
+            </button>
+            <% if(usuario && usuario.perfil === 'admin' && e.status === 'pendente') { %>
+              <button class="btn-acao aprovar" onclick="aprovar(<%= e.id %>)" title="Aprovar">
+                <i class="fas fa-check"></i>
+              </button>
+              <button class="btn-acao rejeitar" onclick="abrirRejeitar(<%= e.id %>)" title="Rejeitar">
+                <i class="fas fa-times"></i>
+              </button>
+            <% } %>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<% } %>
+
+<!-- Modal detalhe -->
+<div class="modal-overlay" id="modalDetalhe">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <h3><i class="fas fa-info-circle"></i> Detalhes da Escala</h3>
+        <div class="modal-meta" id="det-meta"></div>
+      </div>
+      <button class="btn-close-modal" onclick="fecharModal('modalDetalhe')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div><div class="form-label">Ministro</div><div id="det-ministro" style="font-weight:700;font-size:15px"></div></div>
+        <div><div class="form-label">Igreja</div><div id="det-igreja" style="font-weight:700"></div></div>
+        <div><div class="form-label">Data</div><div id="det-data"></div></div>
+        <div><div class="form-label">Turno</div><div id="det-turno"></div></div>
+        <div style="grid-column:1/3"><div class="form-label">Tema</div><div id="det-tema" style="color:#4a5568"></div></div>
+        <div style="grid-column:1/3"><div class="form-label">Observação</div><div id="det-obs" style="color:#4a5568"></div></div>
+        <div style="grid-column:1/3" id="det-motivo-box">
+          <div class="form-label">Motivo da Rejeição</div>
+          <div id="det-motivo" style="color:#dc2626;font-weight:600"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="fecharModal('modalDetalhe')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal rejeitar -->
+<div class="modal-overlay" id="modalRejeitar">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <div><h3><i class="fas fa-times-circle"></i> Rejeitar Escala</h3></div>
+      <button class="btn-close-modal" onclick="fecharModal('modalRejeitar')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Motivo da rejeição (opcional)</label>
+        <textarea id="motivo-rejeicao" class="form-control" rows="3" placeholder="Informe o motivo..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="fecharModal('modalRejeitar')">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmarRejeitar()"><i class="fas fa-times"></i> Confirmar Rejeição</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.btn-acao {
+  width:32px;height:32px;border-radius:8px;border:none;cursor:pointer;
+  background:#f0f4f8;color:#4a5568;font-size:14px;
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:all .2s;margin:0 2px;
+}
+.btn-acao:hover { background:#e2e8f0;color:#1a2332; }
+.btn-acao.aprovar { background:#d1fae5;color:#065f46; }
+.btn-acao.aprovar:hover { background:#a7f3d0; }
+.btn-acao.rejeitar { background:#fee2e2;color:#991b1b; }
+.btn-acao.rejeitar:hover { background:#fecaca; }
+.status-badge {
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;
+}
+.status-badge.pendente  { background:#fff3e0;color:#e65100; }
+.status-badge.aprovado  { background:#e8f5e9;color:#1b5e20; }
+.status-badge.rejeitado { background:#ffebee;color:#b71c1c; }
+</style>
+
+<script>
+function aplicarFiltro() {
+  var status = document.getElementById('filtro-status').value;
+  var igreja = document.getElementById('filtro-igreja').value;
+  window.location = '/aprovacoes?status=' + status + '&igreja=' + igreja;
+}
+
+function fecharModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function verDetalhe(btn) {
+  document.getElementById('det-ministro').textContent = btn.dataset.ministro;
+  document.getElementById('det-igreja').textContent   = btn.dataset.igreja;
+  document.getElementById('det-data').textContent     = btn.dataset.data;
+  document.getElementById('det-turno').textContent    = btn.dataset.turno;
+  document.getElementById('det-tema').textContent     = btn.dataset.tema || '—';
+  document.getElementById('det-obs').textContent      = btn.dataset.obs  || '—';
+  document.getElementById('det-meta').textContent     = 'Status: ' + btn.dataset.status;
+  var motivoBox = document.getElementById('det-motivo-box');
+  if (btn.dataset.motivo) {
+    document.getElementById('det-motivo').textContent = btn.dataset.motivo;
+    motivoBox.style.display = 'block';
+  } else {
+    motivoBox.style.display = 'none';
+  }
+  document.getElementById('modalDetalhe').classList.add('open');
+}
+
+async function aprovar(id) {
+  if (!confirm('Confirmar aprovação desta escala?')) return;
+  try {
+    var r = await fetch('/aprovacoes/' + id + '/aprovar', { method: 'POST' });
+    var d = await r.json();
+    if (d.success) {
+      document.getElementById('status-' + id).innerHTML =
+        '<span class="status-badge aprovado"><i class="fas fa-check-circle"></i> Aprovado</span>';
+      var row = document.getElementById('row-' + id);
+      row.querySelectorAll('.btn-acao.aprovar, .btn-acao.rejeitar').forEach(function(b){ b.remove(); });
+    }
+  } catch(e) { alert('Erro ao aprovar.'); }
+}
+
+var rejeitarId = null;
+function abrirRejeitar(id) {
+  rejeitarId = id;
+  document.getElementById('motivo-rejeicao').value = '';
+  document.getElementById('modalRejeitar').classList.add('open');
+}
+
+async function confirmarRejeitar() {
+  if (!rejeitarId) return;
+  var motivo = document.getElementById('motivo-rejeicao').value;
+  try {
+    var r = await fetch('/aprovacoes/' + rejeitarId + '/rejeitar', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ motivo: motivo })
+    });
+    var d = await r.json();
+    if (d.success) {
+      var html = '<span class="status-badge rejeitado"><i class="fas fa-times-circle"></i> Rejeitado</span>';
+      if (motivo) html += '<div style="font-size:11px;color:#dc2626;margin-top:3px">' + motivo.substring(0,40) + '</div>';
+      document.getElementById('status-' + rejeitarId).innerHTML = html;
+      var row = document.getElementById('row-' + rejeitarId);
+      row.querySelectorAll('.btn-acao.aprovar, .btn-acao.rejeitar').forEach(function(b){ b.remove(); });
+      fecharModal('modalRejeitar');
+    }
+  } catch(e) { alert('Erro ao rejeitar.'); }
+}
+
+document.addEventListener('click', function(e) {
+  ['modalDetalhe','modalRejeitar'].forEach(function(id){
+    var m = document.getElementById(id);
+    if (m && e.target === m) fecharModal(id);
+  });
+});
+</script>
+
+<%- include('../partials/footer') %>

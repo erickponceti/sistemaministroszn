@@ -1,0 +1,181 @@
+<%- include('../partials/header', {page:'alugueis'}) %>
+
+<div class="breadcrumb">
+  <a href="/alugueis"><i class="fas fa-key"></i> Aluguéis</a>
+  <i class="fas fa-chevron-right"></i>
+  <span><%= aluguel.placa %> — <%= aluguel.cliente_nome %></span>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+  <div>
+    <h1 style="font-size:20px;font-weight:800;display:flex;align-items:center;gap:8px;">
+      <span class="placa-badge" style="font-size:16px;"><%= aluguel.placa %></span>
+      <%= aluguel.marca %> <%= aluguel.modelo %>
+      <span class="badge badge-<%= aluguel.status %>"><%= aluguel.status %></span>
+    </h1>
+    <p style="color:#64748B;margin-top:4px;">Cliente: <strong><%= aluguel.cliente_nome %></strong> <%= aluguel.whatsapp ? '· ' + aluguel.whatsapp : '' %></p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <button class="btn btn-primary" onclick="abrirComparacao(<%= aluguel.id %>)">
+      <i class="fas fa-balance-scale"></i> Módulo de Comparação
+    </button>
+    <% if (aluguel.status === 'ativo') { %>
+    <a href="/pagamentos/novo?aluguel_id=<%= aluguel.id %>" class="btn btn-success">
+      <i class="fas fa-money-bill-wave"></i> Registrar Pagamento
+    </a>
+    <button class="btn btn-warning" onclick="openModal('modal-encerrar')">
+      <i class="fas fa-flag-checkered"></i> Encerrar Contrato
+    </button>
+    <% } %>
+    <% if (aluguel.whatsapp) { %>
+    <button class="btn btn-whatsapp" onclick="enviarWhatsApp('<%= aluguel.whatsapp %>','<%= aluguel.cliente_nome %>','<%= aluguel.placa %>','<%= new Date(aluguel.data_fim_prevista) - new Date() > 0 ? Math.ceil((new Date(aluguel.data_fim_prevista) - new Date()) / 86400000) : 0 %>')">
+      <i class="fab fa-whatsapp"></i> WhatsApp
+    </button>
+    <% } %>
+  </div>
+</div>
+
+<!-- Info Cards -->
+<div class="stats-grid" style="margin-bottom:24px;">
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fas fa-calendar-alt"></i></div>
+    <div class="stat-info">
+      <div class="stat-value" style="font-size:16px;"><%= new Date(aluguel.data_inicio).toLocaleDateString('pt-BR') %></div>
+      <div class="stat-label">Data de Início</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon yellow"><i class="fas fa-calendar-check"></i></div>
+    <div class="stat-info">
+      <div class="stat-value" style="font-size:16px;"><%= new Date(aluguel.data_fim_prevista).toLocaleDateString('pt-BR') %></div>
+      <div class="stat-label">Término Previsto</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fas fa-tag"></i></div>
+    <div class="stat-info">
+      <div class="stat-value" style="font-size:18px;">R$ <%= parseFloat(aluguel.valor_semanal).toLocaleString('pt-BR',{minimumFractionDigits:2}) %></div>
+      <div class="stat-label">Valor por Semana</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon purple"><i class="fas fa-coins"></i></div>
+    <div class="stat-info">
+      <% const totalPago = pagamentos.reduce((s, p) => s + parseFloat(p.valor), 0); %>
+      <div class="stat-value" style="font-size:18px;color:var(--success)">R$ <%= totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2}) %></div>
+      <div class="stat-label">Total Recebido</div>
+    </div>
+  </div>
+</div>
+
+<!-- Checklists Summary -->
+<% const checkin = checklists.find(c => c.tipo === 'checkin'); %>
+<% const checkout = checklists.find(c => c.tipo === 'checkout'); %>
+
+<div class="form-row form-row-2" style="margin-bottom:20px;gap:16px;">
+  <div class="card" style="border-left:4px solid var(--success);">
+    <div class="card-header">
+      <div class="card-title" style="color:var(--success);"><i class="fas fa-sign-in-alt"></i> Check-in</div>
+      <% if (!checkin) { %>
+      <a href="/checklists/novo?aluguel_id=<%= aluguel.id %>&tipo=checkin" class="btn btn-success btn-sm"><i class="fas fa-plus"></i> Fazer Check-in</a>
+      <% } %>
+    </div>
+    <div class="card-body">
+      <% if (checkin) { %>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><small style="color:#94A3B8;">Data</small><br><strong><%= new Date(checkin.criado_em).toLocaleString('pt-BR') %></strong></div>
+        <div><small style="color:#94A3B8;">KM</small><br><strong class="km-display"><%= checkin.km_veiculo ? checkin.km_veiculo.toLocaleString('pt-BR') + ' km' : '—' %></strong></div>
+        <div><small style="color:#94A3B8;">Combustível</small><br><strong><%= checkin.tanque_combustivel || '—' %></strong></div>
+        <div><small style="color:#94A3B8;">Motor</small><br><strong><%= checkin.motor || '—' %></strong></div>
+      </div>
+      <% } else { %>
+      <div class="empty-state" style="padding:20px;"><i class="fas fa-clipboard"></i><p>Check-in não realizado</p></div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card" style="border-left:4px solid var(--info);">
+    <div class="card-header">
+      <div class="card-title" style="color:var(--info);"><i class="fas fa-sign-out-alt"></i> Check-out</div>
+      <% if (!checkout && aluguel.status === 'encerrado') { %>
+      <a href="/checklists/novo?aluguel_id=<%= aluguel.id %>&tipo=checkout" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Fazer Check-out</a>
+      <% } %>
+    </div>
+    <div class="card-body">
+      <% if (checkout) { %>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><small style="color:#94A3B8;">Data</small><br><strong><%= new Date(checkout.criado_em).toLocaleString('pt-BR') %></strong></div>
+        <div><small style="color:#94A3B8;">KM</small><br><strong class="km-display"><%= checkout.km_veiculo ? checkout.km_veiculo.toLocaleString('pt-BR') + ' km' : '—' %></strong></div>
+        <div><small style="color:#94A3B8;">Combustível</small><br><strong><%= checkout.tanque_combustivel || '—' %></strong></div>
+        <div><small style="color:#94A3B8;">Motor</small><br><strong><%= checkout.motor || '—' %></strong></div>
+      </div>
+      <% } else { %>
+      <div class="empty-state" style="padding:20px;"><i class="fas fa-clipboard"></i><p>Check-out não realizado</p></div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Pagamentos -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-money-bill-wave"></i> Pagamentos</div>
+    <a href="/pagamentos/novo?aluguel_id=<%= aluguel.id %>" class="btn btn-success btn-sm"><i class="fas fa-plus"></i> Registrar</a>
+  </div>
+  <div class="table-wrapper" style="border:none;border-radius:0;">
+    <% if (pagamentos.length === 0) { %>
+    <div class="empty-state"><i class="fas fa-money-bill"></i><p>Nenhum pagamento registrado.</p></div>
+    <% } else { %>
+    <table>
+      <thead><tr><th>Data</th><th>Valor</th><th>Forma</th><th>Referência</th><th>Obs.</th></tr></thead>
+      <tbody>
+        <% pagamentos.forEach(p => { %>
+        <tr>
+          <td><%= new Date(p.data_pagamento).toLocaleDateString('pt-BR') %></td>
+          <td><strong style="color:var(--success)">R$ <%= parseFloat(p.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}) %></strong></td>
+          <td><%= p.forma_pagamento || '—' %></td>
+          <td><%= p.referencia_semana ? new Date(p.referencia_semana).toLocaleDateString('pt-BR') : '—' %></td>
+          <td><%= p.observacoes || '—' %></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% } %>
+  </div>
+</div>
+
+<!-- Modal Encerrar -->
+<div class="modal-backdrop" id="modal-encerrar">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fas fa-flag-checkered" style="color:var(--warning)"></i> Encerrar Contrato</div>
+      <button class="modal-close" onclick="closeModal('modal-encerrar')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="color:#64748B;margin-bottom:20px;">Informe a data real de devolução do veículo. Após encerrar, você será redirecionado para o check-out.</p>
+      <form action="/alugueis/<%= aluguel.id %>/encerrar" method="POST">
+        <div class="form-group" style="margin-bottom:20px;">
+          <label>Data Real de Devolução</label>
+          <input type="date" name="data_fim_real" value="<%= new Date().toISOString().split('T')[0] %>">
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-encerrar')">Cancelar</button>
+          <button type="submit" class="btn btn-warning"><i class="fas fa-flag-checkered"></i> Encerrar e Fazer Check-out</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Comparação -->
+<div class="modal-backdrop" id="modal-comparacao">
+  <div class="modal" style="max-width:960px;">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fas fa-balance-scale" style="color:var(--primary)"></i> Módulo de Comparação — Check-in vs Check-out</div>
+      <button class="modal-close" onclick="closeModal('modal-comparacao')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="comparacao-body"></div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

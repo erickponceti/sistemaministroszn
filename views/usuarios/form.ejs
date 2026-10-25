@@ -1,0 +1,194 @@
+<%- include('../partials/header') %>
+
+<div class="breadcrumb">
+  <a href="/usuarios"><i class="fas fa-users"></i> Usuarios</a>
+  <i class="fas fa-chevron-right" style="font-size:10px"></i>
+  <span><%= usuario ? 'Editar' : 'Novo Usuario' %></span>
+</div>
+
+<% if (typeof erro !== 'undefined' && erro) { %>
+  <div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> <%= erro %></div>
+<% } %>
+
+<div class="card" style="max-width:560px">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fas fa-user-cog" style="color:var(--primary)"></i>
+      <%= usuario ? 'Editar Usuario' : 'Cadastrar Novo Usuario' %>
+    </div>
+  </div>
+
+  <form action="<%= usuario ? '/usuarios/' + usuario.id : '/usuarios' %>" method="POST">
+
+    <div class="form-group">
+      <label class="form-label">Nome completo *</label>
+      <input type="text" name="nome" class="form-control" required
+        value="<%= usuario ? usuario.nome : '' %>"
+        placeholder="Nome do usuario">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">E-mail *</label>
+        <input type="email" name="email" class="form-control" required
+          value="<%= usuario ? usuario.email : '' %>"
+          placeholder="email@exemplo.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label"><%= usuario ? 'Nova senha (deixe em branco para manter)' : 'Senha *' %></label>
+        <div style="position:relative">
+          <input type="password" name="senha" id="campo-senha" class="form-control"
+            <%= usuario ? '' : 'required' %>
+            placeholder="<%= usuario ? 'Deixe em branco para nao alterar' : 'Minimo 6 caracteres' %>"
+            style="padding-right:42px">
+          <button type="button" onclick="toggleSenha()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-light)">
+            <i class="fas fa-eye" id="icone-senha"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Perfil de Acesso -->
+    <div class="form-group">
+      <label class="form-label"><i class="fas fa-shield-alt" style="color:var(--primary)"></i> Perfil de Acesso *</label>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+        <% PERFIS.forEach(function(p) {
+          var isChecked = usuario && usuario.perfil === p.value;
+          var iconMap = { admin:'fa-crown', secretaria:'fa-edit', email:'fa-eye' };
+          var colorMap = { admin:'#01539D', secretaria:'#065f46', email:'#5b21b6' };
+          var bgMap    = { admin:'#EAF2FB', secretaria:'#d1fae5', email:'#ede9fe' };
+        %>
+          <label class="perfil-option <%= isChecked ? 'checked' : '' %>" id="opt-<%= p.value %>">
+            <input type="radio" name="perfil" value="<%= p.value %>"
+              <%= isChecked ? 'checked' : '' %> required
+              onchange="togglePerfil(this)">
+            <div class="perfil-icon" style="background:<%= bgMap[p.value] %>;color:<%= colorMap[p.value] %>">
+              <i class="fas <%= iconMap[p.value] %>"></i>
+            </div>
+            <div class="perfil-info">
+              <div class="perfil-title" style="color:<%= colorMap[p.value] %>"><%= p.label %></div>
+              <div class="perfil-desc"><%= p.desc %></div>
+            </div>
+            <div class="perfil-check"><i class="fas fa-check"></i></div>
+          </label>
+        <% }); %>
+      </div>
+    </div>
+
+    <!-- Permissoes resumidas por perfil -->
+    <div id="permissoes-box" style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:13px">
+      <div style="font-weight:800;color:var(--text-dark);margin-bottom:10px"><i class="fas fa-list-check"></i> Permissoes deste perfil:</div>
+      <div id="perm-admin" style="display:none">
+        <div class="perm-item perm-ok"><i class="fas fa-check"></i> Dashboard e graficos</div>
+        <div class="perm-item perm-ok"><i class="fas fa-check"></i> Cadastrar / editar / excluir Igrejas</div>
+        <div class="perm-item perm-ok"><i class="fas fa-check"></i> Cadastrar / editar / excluir Ministros</div>
+        <div class="perm-item perm-ok"><i class="fas fa-check"></i> Criar e gerenciar Agendamentos</div>
+        <div class="perm-item perm-ok"><i class="fas fa-check"></i> Aprovar e rejeitar escalas</div>
+        <div class="perm-item perm-ok"><i class="fas fa-check"></i> Relatorios completos</div>
+        <div class="perm-item perm-ok"><i class="fas fa-check"></i> Gerenciar usuarios</div>
+      </div>
+      <div id="perm-secretaria" style="display:none">
+        <div class="perm-item perm-ok"><i class="fas fa-check"></i> Dashboard e graficos</div>
+        <div class="perm-item perm-no"><i class="fas fa-times"></i> Nao pode cadastrar / editar / excluir Igrejas</div>
+        <div class="perm-item perm-ok"><i class="fas fa-check"></i> Cadastrar e editar Ministros</div>
+        <div class="perm-item perm-no"><i class="fas fa-times"></i> Nao pode excluir Ministros</div>
+        <div class="perm-item perm-ok"><i class="fas fa-check"></i> Criar e editar Agendamentos</div>
+        <div class="perm-item perm-no"><i class="fas fa-times"></i> Nao pode aprovar ou rejeitar escalas</div>
+        <div class="perm-item perm-ok"><i class="fas fa-check"></i> Visualizar Relatorios</div>
+      </div>
+      <div id="perm-email" style="display:none">
+        <div class="perm-item perm-ok"><i class="fas fa-check"></i> Dashboard e graficos</div>
+        <div class="perm-item perm-no"><i class="fas fa-times"></i> Nao pode cadastrar ou editar nada</div>
+        <div class="perm-item perm-ok"><i class="fas fa-check"></i> Visualizar Relatorios</div>
+        <div class="perm-item perm-no"><i class="fas fa-times"></i> Sem acesso a Agendamentos ou Aprovacoes</div>
+      </div>
+    </div>
+
+    <!-- Ativo -->
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 14px;border:2px solid var(--border);border-radius:10px;background:#fff">
+        <input type="checkbox" name="ativo" id="chk-ativo"
+          <%= !usuario || usuario.ativo ? 'checked' : '' %>
+          style="width:16px;height:16px;cursor:pointer;accent-color:var(--primary)">
+        <span style="font-weight:700;font-size:14px;color:var(--text-dark)">Usuario ativo</span>
+        <span style="font-size:12px;color:var(--text-light)">— desmarque para bloquear o acesso sem excluir</span>
+      </label>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-save"></i> <%= usuario ? 'Salvar Alteracoes' : 'Cadastrar Usuario' %>
+      </button>
+      <a href="/usuarios" class="btn btn-outline"><i class="fas fa-times"></i> Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<style>
+.perfil-option {
+  display:flex;align-items:center;gap:12px;
+  padding:13px 16px;border:2px solid var(--border);
+  border-radius:12px;cursor:pointer;transition:all .15s;background:#fff;
+}
+.perfil-option input { display:none; }
+.perfil-option:hover { border-color:#aaa; }
+.perfil-option.checked { border-color:var(--primary);background:var(--primary-light); }
+.perfil-icon {
+  width:40px;height:40px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;
+}
+.perfil-info { flex:1; }
+.perfil-title { font-size:14px;font-weight:800; }
+.perfil-desc  { font-size:12px;color:var(--text-light);margin-top:2px; }
+.perfil-check {
+  width:22px;height:22px;border-radius:50%;
+  background:#e2e8f0;display:flex;align-items:center;justify-content:center;
+  font-size:10px;color:transparent;transition:all .15s;flex-shrink:0;
+}
+.perfil-option.checked .perfil-check { background:var(--primary);color:#fff; }
+
+.perm-item {
+  display:flex;align-items:center;gap:8px;
+  padding:5px 0;font-size:12px;font-weight:600;
+}
+.perm-ok { color:#065f46; }
+.perm-no { color:#991b1b; }
+.perm-item i { width:14px;text-align:center;font-size:11px; }
+</style>
+
+<script>
+function togglePerfil(radio) {
+  document.querySelectorAll('.perfil-option').forEach(function(el) {
+    el.classList.remove('checked');
+  });
+  radio.closest('.perfil-option').classList.add('checked');
+  mostrarPermissoes(radio.value);
+}
+
+function mostrarPermissoes(perfil) {
+  ['admin','secretaria','email'].forEach(function(p) {
+    var el = document.getElementById('perm-' + p);
+    if (el) el.style.display = (p === perfil) ? 'block' : 'none';
+  });
+}
+
+function toggleSenha() {
+  var campo  = document.getElementById('campo-senha');
+  var icone  = document.getElementById('icone-senha');
+  if (campo.type === 'password') {
+    campo.type = 'text';
+    icone.className = 'fas fa-eye-slash';
+  } else {
+    campo.type = 'password';
+    icone.className = 'fas fa-eye';
+  }
+}
+
+// Inicializar permissoes conforme perfil atual
+var perfilAtual = document.querySelector('input[name="perfil"]:checked');
+if (perfilAtual) mostrarPermissoes(perfilAtual.value);
+</script>
+
+<%- include('../partials/footer') %>

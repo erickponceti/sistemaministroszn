@@ -1,0 +1,560 @@
+<%- include('../partials/header') %>
+
+<%
+var DIAS_PT  = ['domingo','segunda','terca','quarta','quinta','sexta','sabado'];
+var MESES_PT = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function formatDate(d) {
+  var wd  = DIAS_PT[d.getDay()];
+  var day = String(d.getDate()).padStart(2,'0');
+  var m   = String(d.getMonth()+1).padStart(2,'0');
+  return { dayName: wd.charAt(0).toUpperCase()+wd.slice(1), dayShort: day+'/'+m, iso: d.toISOString().split('T')[0] };
+}
+function isThursday(d) { return d.getDay() === 4; }
+function isSunday(d)   { return d.getDay() === 0; }
+%>
+
+<!-- Navegacao por mes -->
+<div class="month-nav">
+  <% for(var i=1; i<=12; i++) { %>
+    <a href="/agendamento?mes=<%= i %>&ano=<%= ano %>"
+       class="month-btn <%= mes === i ? 'active' : '' %>"><%= MESES_PT[i-1] %></a>
+  <% } %>
+</div>
+
+<!-- Header -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+  <div>
+    <h2 style="font-size:20px;font-weight:900;color:var(--text-dark)">
+      <i class="fas fa-calendar-alt" style="color:var(--primary)"></i>
+      Escala de Ministros &mdash; <%= mesNome %> <%= ano %>
+    </h2>
+    <p style="font-size:13px;color:var(--text-light);margin-top:3px">
+      Clique em <strong style="color:var(--primary)">+</strong> para agendar um ministro em uma igreja
+    </p>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <a href="/agendamento?mes=<%= mes %>&ano=<%= ano-1 %>" class="btn btn-sm btn-outline"><i class="fas fa-chevron-left"></i> <%= ano-1 %></a>
+    <span style="font-weight:800;color:var(--text-dark);font-size:14px"><%= ano %></span>
+    <a href="/agendamento?mes=<%= mes %>&ano=<%= ano+1 %>" class="btn btn-sm btn-outline"><%= ano+1 %> <i class="fas fa-chevron-right"></i></a>
+  </div>
+</div>
+
+<% if (igrejas.length === 0) { %>
+  <div class="card">
+    <div class="empty-state">
+      <i class="fas fa-church"></i>
+      <p>Cadastre igrejas primeiro para usar o agendamento.</p>
+      <a href="/igrejas/nova" class="btn btn-primary" style="margin-top:16px"><i class="fas fa-plus"></i> Cadastrar Igreja</a>
+    </div>
+  </div>
+<% } else if (dias.length === 0) { %>
+  <div class="card"><div class="empty-state"><i class="fas fa-calendar-times"></i><p>Nenhuma quinta ou domingo neste mes.</p></div></div>
+<% } else { %>
+
+<div class="sched-container">
+  <table class="sched-table">
+    <thead>
+      <tr>
+        <th class="col-date"><i class="fas fa-calendar-day"></i> Datas</th>
+        <% igrejas.forEach(function(ig) { %>
+          <th title="<%= ig.nome %>"><%= ig.sigla %></th>
+        <% }); %>
+      </tr>
+    </thead>
+    <tbody>
+      <% for(var di=0; di<dias.length; di++) {
+        var dia = dias[di];
+        var fmt = formatDate(dia);
+        var isQui = isThursday(dia);
+        var isDom = isSunday(dia);
+        var rowClass = isDom ? 'is-sunday' : 'is-thursday';
+        var rowLabel = isQui ? 'Quinta-feira' : 'Domingo';
+      %>
+
+        <% if (isDom) {
+          // AJUSTE 1: Domingo agora é 1 unica linha — sem sub-linhas de turno
+          // O turno e escolhido apenas dentro do popup
+        %>
+          <tr>
+            <td class="date-cell <%= rowClass %>">
+              <div class="day-name"><%= rowLabel %>, <%= fmt.dayShort %></div>
+              <div style="margin-top:3px;font-size:11px;color:var(--text-light);font-weight:600">
+                Manha / Tarde / Noite
+              </div>
+            </td>
+
+            <% for(var ii=0; ii<igrejas.length; ii++) {
+              var ig = igrejas[ii];
+              // Verificar se existe algum agendamento nessa data/igreja (qualquer turno)
+              var agendos = [];
+              var turnosVerificar = ['Manhã','Tarde','Noite'];
+              for(var tt=0; tt<turnosVerificar.length; tt++) {
+                var kk = fmt.iso + '_' + turnosVerificar[tt] + '_' + ig.id;
+                if (agendMap[kk]) agendos.push(agendMap[kk]);
+              }
+            %>
+              <td>
+                <div class="cell-inner" style="gap:3px">
+                  <% if (agendos.length > 0) { %>
+                    <% for(var ai=0; ai<agendos.length; ai++) {
+                      var agend = agendos[ai];
+                      var tSlug = agend.turno==='Manhã'?'manha':(agend.turno==='Tarde'?'tarde':'noite');
+                    %>
+                    <%
+                      var cardStatus = (agend.status==='aprovado'||agend.status==='rejeitado') ? agend.status : (agend.confirmacao || 'pendente');
+                    %>
+                    <div class="sched-filled sf-conf-<%= cardStatus %>"
+                      data-agend-id="<%= agend.id %>"
+                      data-ministro-id="<%= agend.ministro_id %>"
+                      data-tema="<%= (agend.tema||'').replace(/\"/g,'&quot;') %>"
+                      data-obs="<%= (agend.observacao||'').replace(/\"/g,'&quot;') %>"
+                      data-tel="<%= agend.ministro_telefone || '' %>"
+                      onclick="openScheduleModal('<%= fmt.iso %>','<%= agend.turno %>','<%= ig.id %>','<%= ig.nome %>','<%= agend.id %>')">
+                      <div class="sf-turno <%= tSlug %>"><%= agend.turno %></div>
+                      <div class="sf-name"><%= agend.ministro_nome %></div>
+                      <% if (agend.tema) { %><div class="sf-tema" title="<%= agend.tema %>"><%= agend.tema %></div><% } %>
+                      <% if (agend.confirmacao==='confirmado' || agend.confirmacao==='recusado') { %>
+                      <div class="sf-status sf-status-<%= agend.confirmacao %>">
+                        <% if (agend.confirmacao==='confirmado') { %><i class="fas fa-check-circle"></i> Confirmado
+                        <% } else { %><i class="fas fa-times-circle"></i> Recusado<% } %>
+                      </div>
+                      <% } %>
+                      <div class="sf-status sf-aprov-<%= agend.status || 'pendente' %>">
+                        <% if ((agend.status||'pendente')==='aprovado') { %><i class="fas fa-shield-alt"></i> Aprovado
+                        <% } else if (agend.status==='rejeitado') { %><i class="fas fa-ban"></i> Rejeitado
+                        <% } else { %><i class="fas fa-hourglass-half"></i> Pend. aprovação<% } %>
+                      </div>
+                      <% if (agend.ministro_telefone) { %>
+                        <button class="btn-zap" onclick="event.stopPropagation();enviarTelegram(<%= agend.id %>)" title="Enviar escala via Telegram">
+                          <i class="fab fa-telegram-plane"></i> Enviar
+                        </button>
+                      <% } %>
+                    </div>
+                    <% } %>
+                    <!-- Botao para adicionar mais turnos neste dia/igreja -->
+                    <% if (agendos.length < 3) { %>
+                      <button class="btn-add" style="width:28px;height:28px;font-size:13px;margin-top:2px"
+                        onclick="openScheduleModal('<%= fmt.iso %>',null,'<%= ig.id %>','<%= ig.nome %>',null)"
+                        title="Adicionar outro turno">
+                        <i class="fas fa-plus"></i>
+                      </button>
+                    <% } %>
+                  <% } else { %>
+                    <button class="btn-add"
+                      onclick="openScheduleModal('<%= fmt.iso %>',null,'<%= ig.id %>','<%= ig.nome %>',null)"
+                      title="Agendar ministro">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  <% } %>
+                </div>
+              </td>
+            <% } %>
+          </tr>
+
+        <% } else {
+          // Quinta-feira — 1 linha, turno Noite (mas pode escolher no popup)
+        %>
+          <tr>
+            <td class="date-cell <%= rowClass %>">
+              <div class="day-name"><%= rowLabel %>, <%= fmt.dayShort %></div>
+              <div style="margin-top:3px;font-size:11px;color:var(--text-light);font-weight:600">
+                <i class="fas fa-moon" style="font-size:9px;color:#01539D"></i> Noite
+              </div>
+            </td>
+            <% for(var ii=0; ii<igrejas.length; ii++) {
+              var ig = igrejas[ii];
+              var key = fmt.iso + '_Noite_' + ig.id;
+              var agend = agendMap[key];
+            %>
+              <td>
+                <div class="cell-inner">
+                  <% if (agend) { %>
+                    <%
+                      var cardStatus2 = (agend.status==='aprovado'||agend.status==='rejeitado') ? agend.status : (agend.confirmacao || 'pendente');
+                    %>
+                    <div class="sched-filled sf-conf-<%= cardStatus2 %>"
+                      data-agend-id="<%= agend.id %>"
+                      data-ministro-id="<%= agend.ministro_id %>"
+                      data-tema="<%= (agend.tema||'').replace(/\"/g,'&quot;') %>"
+                      data-obs="<%= (agend.observacao||'').replace(/\"/g,'&quot;') %>"
+                      data-tel="<%= agend.ministro_telefone || '' %>"
+                      onclick="openScheduleModal('<%= fmt.iso %>','Noite','<%= ig.id %>','<%= ig.nome %>','<%= agend.id %>')">
+                      <div class="sf-turno noite">Noite</div>
+                      <div class="sf-name"><%= agend.ministro_nome %></div>
+                      <% if (agend.tema) { %><div class="sf-tema" title="<%= agend.tema %>"><%= agend.tema %></div><% } %>
+                      <% if (agend.confirmacao==='confirmado' || agend.confirmacao==='recusado') { %>
+                      <div class="sf-status sf-status-<%= agend.confirmacao %>">
+                        <% if (agend.confirmacao==='confirmado') { %><i class="fas fa-check-circle"></i> Confirmado
+                        <% } else { %><i class="fas fa-times-circle"></i> Recusado<% } %>
+                      </div>
+                      <% } %>
+                      <div class="sf-status sf-aprov-<%= agend.status || 'pendente' %>">
+                        <% if ((agend.status||'pendente')==='aprovado') { %><i class="fas fa-shield-alt"></i> Aprovado
+                        <% } else if (agend.status==='rejeitado') { %><i class="fas fa-ban"></i> Rejeitado
+                        <% } else { %><i class="fas fa-hourglass-half"></i> Pend. aprovação<% } %>
+                      </div>
+                      <% if (agend.ministro_telefone) { %>
+                        <button class="btn-zap" onclick="event.stopPropagation();enviarTelegram(<%= agend.id %>)" title="Enviar escala via Telegram">
+                          <i class="fab fa-telegram-plane"></i> Enviar
+                        </button>
+                      <% } %>
+                    </div>
+                  <% } else { %>
+                    <button class="btn-add"
+                      onclick="openScheduleModal('<%= fmt.iso %>','Noite','<%= ig.id %>','<%= ig.nome %>',null)"
+                      title="Agendar ministro">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  <% } %>
+                </div>
+              </td>
+            <% } %>
+          </tr>
+        <% } %>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<!-- Legenda -->
+<div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;align-items:center">
+  <span style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px">Confirmação:</span>
+  <span style="font-size:12px;font-weight:700;color:#43a047"><i class="fas fa-check-circle"></i> Confirmado</span>
+  <span style="font-size:12px;font-weight:700;color:#e53935"><i class="fas fa-times-circle"></i> Recusado</span>
+  <span style="font-size:12px;font-weight:700;color:#f5a623"><i class="fas fa-clock"></i> Aguardando</span>
+  <span style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-left:8px">Aprovação:</span>
+  <span style="font-size:12px;font-weight:700;color:var(--primary)"><i class="fas fa-shield-alt"></i> Aprovado</span>
+  <span style="font-size:12px;font-weight:700;color:#e53935"><i class="fas fa-ban"></i> Rejeitado</span>
+  <span style="font-size:12px;font-weight:700;color:#94a3b8"><i class="fas fa-hourglass-half"></i> Pend. aprovação</span>
+  <span style="font-size:12px;font-weight:700;color:#25d366"><i class="fab fa-telegram-plane"></i> Enviar convite</span>
+</div>
+
+<% } %>
+
+<!-- ===== MODAL AGENDAMENTO ===== -->
+<div class="modal-overlay" id="schedModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <h3><i class="fas fa-calendar-plus"></i> Agendar Ministro</h3>
+        <div class="modal-meta">
+          <span id="modal-date-display"></span> &nbsp;&middot;&nbsp;
+          <span id="modal-igreja-display"></span>
+        </div>
+      </div>
+      <button class="btn-close-modal" onclick="closeScheduleModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sched_data">
+      <input type="hidden" id="sched_turno">
+      <input type="hidden" id="sched_igreja_id">
+      <input type="hidden" id="sched_agend_id">
+
+      <!-- Ministro -->
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-user-tie"></i> Ministro *</label>
+        <select id="sched_ministro" class="form-control" onchange="mostrarTelMinistro(this)">
+          <option value="">-- Selecione o ministro --</option>
+          <% ministros.forEach(function(m) { %>
+            <option value="<%= m.id %>" data-tel="<%= m.telefone || '' %>">
+              <%= m.nome %><%= m.chamado ? ' · ' + m.chamado : '' %><%= m.nome_igreja ? ' · ' + m.nome_igreja : '' %>
+            </option>
+          <% }); %>
+        </select>
+        <div id="tel-ministro-info" style="display:none;margin-top:6px;font-size:12px;color:#0088cc;font-weight:700">
+          <i class="fab fa-telegram-plane"></i> <span id="tel-ministro-val"></span>
+        </div>
+      </div>
+
+      <!-- Tema -->
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-bible"></i> Tema da Ministracao</label>
+        <input type="text" id="sched_tema" class="form-control" placeholder="Ex: A graca de Deus...">
+      </div>
+
+      <!-- Turno — sempre visivel no popup -->
+      <div class="form-group">
+        <label class="form-label"><i class="fas fa-clock"></i> Turno *</label>
+        <div class="turno-options">
+          <div class="turno-opt">
+            <input type="radio" name="turno_radio" id="turno_manha" value="Manhã">
+            <label for="turno_manha"><i class="fas fa-sun" style="color:#f59e0b"></i> Manha</label>
+          </div>
+          <div class="turno-opt">
+            <input type="radio" name="turno_radio" id="turno_tarde" value="Tarde">
+            <label for="turno_tarde"><i class="fas fa-cloud-sun" style="color:#C2410C"></i> Tarde</label>
+          </div>
+          <div class="turno-opt">
+            <input type="radio" name="turno_radio" id="turno_noite" value="Noite">
+            <label for="turno_noite"><i class="fas fa-moon" style="color:#01539D"></i> Noite</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Observacao -->
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label"><i class="fas fa-sticky-note"></i> Observacao</label>
+        <textarea id="sched_obs" class="form-control" rows="2" placeholder="Informacoes adicionais..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-delete-sched" class="btn btn-danger" onclick="deleteSchedule()" style="display:none;margin-right:auto">
+        <i class="fas fa-trash"></i> Remover
+      </button>
+      <button class="btn btn-outline" onclick="closeScheduleModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="submitSchedule()">
+        <i class="fas fa-check"></i> Confirmar Escala
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL WHATSAPP (AJUSTE 2) ===== -->
+<div class="modal-overlay" id="modalZap">
+  <div class="modal-box" style="max-width:500px">
+    <div class="modal-header" style="background:#075e54">
+      <div>
+        <h3><i class="fab fa-telegram-plane"></i> Enviar Escala via WhatsApp</h3>
+        <div class="modal-meta" id="zap-ministro-info"></div>
+      </div>
+      <button class="btn-close-modal" onclick="fecharZap()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Loading -->
+      <div id="zap-loading" style="text-align:center;padding:24px;display:none">
+        <i class="fas fa-spinner fa-spin" style="font-size:24px;color:#25d366"></i>
+        <div style="margin-top:8px;font-size:14px;color:var(--text-light)">Gerando mensagem...</div>
+      </div>
+
+      <!-- Conteudo -->
+      <div id="zap-content" style="display:none">
+
+        <!-- Preview da mensagem (sem os links) -->
+        <div style="background:#e7f3e8;border-radius:12px;padding:14px 16px;font-size:13px;color:#1a2332;line-height:1.8;margin-bottom:18px;border:1px solid #c3e6cb">
+          <div id="zap-preview"></div>
+        </div>
+
+        <!-- Checkboxes SIM/NAO integrados na mensagem -->
+        <div style="background:#f8fafc;border:2px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px">
+          <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--text-light);margin-bottom:12px">
+            <i class="fas fa-question-circle"></i> Confirmacao de Presenca
+          </div>
+          <div style="display:flex;gap:16px">
+
+            <label class="conf-opcao" id="lbl-sim">
+              <input type="radio" name="conf_resposta" value="sim" onchange="selecionarResposta('sim')">
+              <span class="conf-check" style="border-color:#43a047">
+                <i class="fas fa-check" style="color:#43a047"></i>
+              </span>
+              <span class="conf-texto">
+                <strong style="color:#43a047">SIM</strong>
+                <span>Confirmo minha presenca</span>
+              </span>
+            </label>
+
+            <label class="conf-opcao" id="lbl-nao">
+              <input type="radio" name="conf_resposta" value="nao" onchange="selecionarResposta('nao')">
+              <span class="conf-check" style="border-color:#e53935">
+                <i class="fas fa-times" style="color:#e53935"></i>
+              </span>
+              <span class="conf-texto">
+                <strong style="color:#e53935">NAO</strong>
+                <span>Nao poderei ir</span>
+              </span>
+            </label>
+
+          </div>
+          <div id="conf-feedback" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:700"></div>
+        </div>
+
+        <!-- Telefone -->
+        <div style="font-size:12px;color:var(--text-light)">
+          <i class="fab fa-whatsapp" style="color:#25d366"></i>
+          Sera enviado para: <strong id="zap-tel" style="color:var(--text-dark)"></strong>
+        </div>
+
+      </div>
+
+      <!-- Erro -->
+      <div id="zap-erro" style="display:none;background:#fee2e2;border-radius:10px;padding:14px;color:#991b1b;font-size:14px;font-weight:600"></div>
+
+    </div>
+    <div class="modal-footer" id="zap-footer" style="display:none">
+      <button class="btn btn-outline" onclick="fecharZap()">Cancelar</button>
+      <a id="btn-enviar-escala" href="#" target="_blank" class="btn" style="background:#25d366;color:#fff" onclick="fecharZap()">
+        <i class="fab fa-telegram-plane"></i> Enviar Escala
+      </a>
+    </div>
+  </div>
+</div>
+
+<style>
+.sf-status {
+  font-size:10px;font-weight:700;margin-top:3px;
+  display:flex;align-items:center;gap:3px;justify-content:center;
+}
+.sf-status-confirmado { color:#43a047; }
+.sf-status-recusado   { color:#e53935; }
+.sf-status-pendente   { color:#f5a623; }
+.sf-aprov-aprovado    { color:var(--primary); }
+.sf-aprov-rejeitado   { color:#e53935; }
+.sf-aprov-pendente    { color:#94a3b8; }
+.sf-conf-confirmado { border-color:#43a047 !important; background:#e8f5e9 !important; }
+.sf-conf-confirmado .sf-name { color:#1b5e20 !important; }
+.sf-conf-recusado   { border-color:#e53935 !important; background:#ffebee !important; }
+.sf-conf-recusado   .sf-name { color:#b71c1c !important; }
+.sf-conf-aprovado   { border-color:var(--primary) !important; background:var(--primary-light) !important; }
+.sf-conf-aprovado   .sf-name { color:var(--primary-dark) !important; }
+.sf-conf-rejeitado  { border-color:#e53935 !important; background:#ffebee !important; }
+.sf-conf-rejeitado  .sf-name { color:#b71c1c !important; }
+
+.btn-zap {
+  margin-top:4px;
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  background:#0088cc;color:#fff;border:none;border-radius:20px;
+  padding:3px 10px;font-size:10px;font-weight:700;cursor:pointer;
+  transition:all .2s;width:100%;
+}
+.btn-zap:hover { background:#006aa3; }
+
+/* Opcoes de confirmacao */
+.conf-opcao {
+  flex:1;display:flex;align-items:center;gap:10px;
+  padding:12px 14px;border:2px solid var(--border);
+  border-radius:10px;cursor:pointer;transition:all .15s;
+  background:#fff;
+}
+.conf-opcao input { display:none; }
+.conf-opcao:hover { border-color:#aaa; }
+.conf-check {
+  width:32px;height:32px;border-radius:50%;border:2px solid;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;background:#f8fafc;
+}
+.conf-texto { display:flex;flex-direction:column;gap:2px;font-size:12px; }
+.conf-texto strong { font-size:14px; }
+.conf-texto span   { color:var(--text-light); }
+
+.conf-opcao.selecionado-sim { border-color:#43a047;background:#e8f5e9; }
+.conf-opcao.selecionado-nao { border-color:#e53935;background:#ffebee; }
+</style>
+
+<script>
+var _zapAgendId  = null;
+var _zapUrl      = null;
+var _zapRespostaToken = { sim: null, nao: null };
+
+function mostrarTelMinistro(sel) {
+  var opt = sel.options[sel.selectedIndex];
+  var tel = opt ? opt.dataset.tel : '';
+  var info = document.getElementById('tel-ministro-info');
+  if (tel) {
+    document.getElementById('tel-ministro-val').textContent = tel;
+    info.style.display = 'block';
+  } else {
+    info.style.display = 'none';
+  }
+}
+
+async function enviarTelegram(agendId) {
+  _zapAgendId = agendId;
+  document.getElementById('modalZap').classList.add('open');
+  document.getElementById('zap-loading').style.display  = 'block';
+  document.getElementById('zap-content').style.display  = 'none';
+  document.getElementById('zap-erro').style.display     = 'none';
+  document.getElementById('zap-footer').style.display   = 'none';
+  document.getElementById('conf-feedback').style.display= 'none';
+  document.querySelectorAll('input[name="conf_resposta"]').forEach(function(r){ r.checked=false; });
+  document.getElementById('lbl-sim').className = 'conf-opcao';
+  document.getElementById('lbl-nao').className = 'conf-opcao';
+
+  try {
+    var r = await fetch('/agendamento/api/telegram/' + agendId);
+    var d = await r.json();
+    document.getElementById('zap-loading').style.display = 'none';
+
+    if (d.success) {
+      document.getElementById('zap-preview').textContent = d.mensagemPreview;
+      document.getElementById('zap-tel').textContent     = d.telTeste;
+
+      // Info do ministro
+      var infoEl = document.getElementById('zap-tel-ministro-info');
+      if (d.telefone && d.telefone !== 'nao cadastrado') {
+        infoEl.innerHTML = '<i class="fab fa-telegram-plane" style="color:#0088cc"></i> Ministro: <strong>' + d.telefone + '</strong>';
+      }
+
+      // Se enviou automaticamente via bot
+      var autoOk = document.getElementById('zap-auto-ok');
+      if (d.envioAutomatico) {
+        autoOk.style.display = 'block';
+        document.getElementById('zap-footer').style.display = 'none';
+      } else {
+        autoOk.style.display = 'none';
+        document.getElementById('zap-footer').style.display = 'flex';
+      }
+
+      _zapRespostaToken.sim = d.linkSim;
+      _zapRespostaToken.nao = d.linkNao;
+      document.getElementById('btn-enviar-escala').href = d.linkTelegramTeste || d.linkSim;
+
+      document.getElementById('zap-content').style.display = 'block';
+    } else {
+      document.getElementById('zap-erro').textContent   = d.erro || 'Erro ao gerar mensagem.';
+      document.getElementById('zap-erro').style.display = 'block';
+    }
+  } catch(e) {
+    document.getElementById('zap-loading').style.display = 'none';
+    document.getElementById('zap-erro').textContent      = 'Erro de conexao. Tente novamente.';
+    document.getElementById('zap-erro').style.display    = 'block';
+  }
+}
+
+function selecionarResposta(resp) {
+  // Destacar opcao selecionada
+  document.getElementById('lbl-sim').className = resp==='sim' ? 'conf-opcao selecionado-sim' : 'conf-opcao';
+  document.getElementById('lbl-nao').className = resp==='nao' ? 'conf-opcao selecionado-nao' : 'conf-opcao';
+
+  // Atualizar link do botao enviar com a resposta embutida
+  var url = resp==='sim' ? _zapRespostaToken.sim : _zapRespostaToken.nao;
+  if (url) document.getElementById('btn-enviar-escala').href = url;
+  document.getElementById('btn-enviar-escala').style.background = resp==='sim' ? '#43a047' : '#e53935';
+
+  // Mostrar feedback
+  var fb = document.getElementById('conf-feedback');
+  if (resp==='sim') {
+    fb.style.background = '#e8f5e9';
+    fb.style.color      = '#1b5e20';
+    fb.innerHTML        = '<i class="fas fa-check-circle"></i> Voce confirmou presenca. Clique em "Enviar Escala" para notificar o ministro.';
+  } else {
+    fb.style.background = '#ffebee';
+    fb.style.color      = '#b71c1c';
+    fb.innerHTML        = '<i class="fas fa-times-circle"></i> Voce recusou. Clique em "Enviar Escala" para notificar o ministro.';
+  }
+  fb.style.display = 'block';
+}
+
+function fecharZap() {
+  document.getElementById('modalZap').classList.remove('open');
+}
+
+// Modal de agendamento
+var _origOpen = openScheduleModal;
+function openScheduleModal(data, turno, igrejaId, igrejaNome, agendId) {
+  _origOpen(data, turno, igrejaId, igrejaNome, agendId);
+  if (turno) {
+    document.querySelectorAll('input[name="turno_radio"]').forEach(function(r) {
+      r.checked = (r.value === turno);
+    });
+  }
+  var sel = document.getElementById('sched_ministro');
+  if (sel) mostrarTelMinistro(sel);
+}
+
+document.addEventListener('click', function(e) {
+  if (e.target === document.getElementById('modalZap')) fecharZap();
+});
+</script>
+
+<%- include('../partials/footer') %>

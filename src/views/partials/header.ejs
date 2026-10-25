@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <script>(function(){const t=localStorage.getItem('zelofrota-theme')||'light';document.documentElement.setAttribute('data-theme',t);})();</script>
+</head>
+<body>
+<div class="app-wrapper">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <img src="/logo.png" alt="ZeloFrota">
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">ZeloFrota</span>
+        <span class="brand-sub">Gestão de Frota</span>
+      </div>
+      <button class="sidebar-close" onclick="toggleSidebar()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <span class="nav-label">Principal</span>
+        <a href="/dashboard" data-color="blue" class="nav-item <%= (typeof page!=='undefined'&&page==='dashboard')?'active':'' %>">
+          <div class="nav-icon"><i class="fas fa-chart-pie"></i></div>
+          <span class="nav-label-text">Dashboard</span>
+          <span class="nav-tooltip">Dashboard</span>
+        </a>
+        <a href="/alugueis" data-color="gold" class="nav-item <%= (typeof page!=='undefined'&&page==='alugueis')?'active':'' %>">
+          <div class="nav-icon"><i class="fas fa-key"></i></div>
+          <span class="nav-label-text">Aluguéis</span>
+          <span class="nav-badge" id="badge-alugueis"></span>
+          <span class="nav-tooltip">Contratos de Aluguel</span>
+        </a>
+        <a href="/checklists" data-color="green" class="nav-item <%= (typeof page!=='undefined'&&page==='checklists')?'active':'' %>">
+          <div class="nav-icon"><i class="fas fa-clipboard-check"></i></div>
+          <span class="nav-label-text">Checklists</span>
+          <span class="nav-tooltip">Check-in / Check-out</span>
+        </a>
+        <a href="/pagamentos" data-color="emerald" class="nav-item <%= (typeof page!=='undefined'&&page==='pagamentos')?'active':'' %>">
+          <div class="nav-icon"><i class="fas fa-money-bill-wave"></i></div>
+          <span class="nav-label-text">Pagamentos</span>
+          <span class="nav-tooltip">Registrar Pagamentos</span>
+        </a>
+      </div>
+
+      <div class="nav-divider"></div>
+
+      <div class="nav-section">
+        <span class="nav-label">Cadastros</span>
+        <a href="/veiculos" data-color="blue" class="nav-item <%= (typeof page!=='undefined'&&page==='veiculos')?'active':'' %>">
+          <div class="nav-icon"><i class="fas fa-car"></i></div>
+          <span class="nav-label-text">Veículos</span>
+          <span class="nav-badge" id="badge-veiculos"></span>
+          <span class="nav-tooltip">Frota de Veículos</span>
+        </a>
+        <a href="/pessoas?tipo=cliente" class="nav-item <%= (typeof page!=='undefined'&&page==='clientes')?'active':'' %>">
+          <div class="nav-icon"><i class="fas fa-users"></i></div>
+          <span class="nav-label-text">Clientes</span>
+          <span class="nav-tooltip">Motoristas / Locatários</span>
+        </a>
+        <a href="/pessoas?tipo=fornecedor" class="nav-item <%= (typeof page!=='undefined'&&page==='fornecedores')?'active':'' %>">
+          <div class="nav-icon"><i class="fas fa-truck"></i></div>
+          <span class="nav-label-text">Fornecedores</span>
+          <span class="nav-tooltip">Oficinas e Fornecedores</span>
+        </a>
+        <a href="/pessoas?tipo=empresa" class="nav-item <%= (typeof page!=='undefined'&&page==='empresas')?'active':'' %>">
+          <div class="nav-icon"><i class="fas fa-building"></i></div>
+          <span class="nav-label-text">Empresas</span>
+          <span class="nav-tooltip">Empresas Parceiras</span>
+        </a>
+      </div>
+
+      <div class="nav-divider"></div>
+
+      <div class="nav-section">
+        <span class="nav-label">Operações</span>
+        <a href="/manutencoes" class="nav-item <%= (typeof page!=='undefined'&&page==='manutencoes')?'active':'' %>">
+          <div class="nav-icon"><i class="fas fa-wrench"></i></div>
+          <span class="nav-label-text">Manutenções</span>
+          <span class="nav-tooltip">Custos e Serviços</span>
+        </a>
+        <a href="/relatorios" class="nav-item <%= (typeof page!=='undefined'&&page==='relatorios')?'active':'' %>">
+          <div class="nav-icon"><i class="fas fa-chart-bar"></i></div>
+          <span class="nav-label-text">Relatórios</span>
+          <span class="nav-tooltip">Relatórios Gerenciais</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar"><%= user ? user.nome.charAt(0).toUpperCase() : 'U' %></div>
+        <div class="user-info">
+          <span class="user-name"><%= user ? user.nome : '' %></span>
+          <span class="user-role"><%= user&&user.perfil==='admin' ? '⭐ Administrador' : 'Operador' %></span>
+        </div>
+        <a href="/logout" class="logout-btn" title="Sair"><i class="fas fa-sign-out-alt"></i></a>
+      </div>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+  <main class="main-content">
+    <header class="topbar">
+      <button class="menu-btn" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+      <div class="topbar-title"><%= title.replace(' - ZeloFrota','') %></div>
+      <div class="topbar-actions">
+        <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+          <i class="fas fa-moon icon-moon"></i>
+          <i class="fas fa-sun icon-sun"></i>
+        </button>
+        <a href="/alugueis/novo" class="btn btn-primary btn-sm">
+          <i class="fas fa-plus"></i> Novo Aluguel
+        </a>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <% if(success_msg&&success_msg.length>0){ %>
+        <div class="alert alert-success"><i class="fas fa-check-circle"></i> <%= success_msg %></div>
+      <% } %>
+      <% if(error_msg&&error_msg.length>0){ %>
+        <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> <%= error_msg %></div>
+      <% } %>

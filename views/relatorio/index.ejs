@@ -1,0 +1,214 @@
+<%- include('../partials/header') %>
+
+<!-- Filtros -->
+<form method="GET" action="/relatorio" id="form-filtro">
+  <div class="card" style="margin-bottom:20px;padding:18px 24px">
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
+
+      <div style="flex:0 0 130px">
+        <label class="form-label">Mês</label>
+        <select name="mes" id="filtro-mes" class="form-control" onchange="this.form.submit()">
+          <option value="0" <%= mes === 0 ? 'selected' : '' %>>Todos</option>
+          <% meses.forEach((m,i) => { %>
+            <option value="<%= i+1 %>" <%= mes === i+1 ? 'selected' : '' %>><%= m %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div style="flex:0 0 100px">
+        <label class="form-label">Ano</label>
+        <select name="ano" id="filtro-ano" class="form-control" onchange="this.form.submit()">
+          <option value="0" <%= ano === 0 ? 'selected' : '' %>>Todos</option>
+          <% for(let y = 2024; y <= 2027; y++) { %>
+            <option value="<%= y %>" <%= ano === y ? 'selected' : '' %>><%= y %></option>
+          <% } %>
+        </select>
+      </div>
+
+      <div style="flex:1;min-width:180px">
+        <label class="form-label">Igreja</label>
+        <select name="igreja" class="form-control" onchange="this.form.submit()">
+          <option value="">Todas as igrejas</option>
+          <% igrejas.forEach(ig => { %>
+            <option value="<%= ig.id %>" <%= filtros.igreja == ig.id ? 'selected' : '' %>><%= ig.nome %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div style="flex:1;min-width:200px">
+        <label class="form-label">Ministro</label>
+        <div style="position:relative">
+          <input type="text" name="ministro" id="filtro-ministro" class="form-control"
+            placeholder="Digite o nome..."
+            value="<%= filtros.ministro %>"
+            style="padding-left:36px">
+          <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#718096;font-size:13px"></i>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filtrar</button>
+        <a href="/relatorio?mes=<%= mes %>&ano=<%= ano %>" class="btn btn-outline"><i class="fas fa-times"></i> Limpar</a>
+        <button type="button" class="btn btn-outline" onclick="exportarExcel()" title="Exportar para Excel">
+          <i class="fas fa-file-excel" style="color:#217346"></i> Excel
+        </button>
+      </div>
+
+    </div>
+  </div>
+</form>
+
+<!-- Header resultado -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+  <div>
+    <span style="font-size:16px;font-weight:800;color:#1a2332">
+      <i class="fas fa-list" style="color:var(--primary)"></i>
+      <% var _anoTxt = (typeof anoNome !== 'undefined') ? anoNome : (ano ? String(ano) : 'Todos os anos'); %>
+      <% if (mes === 0 && ano === 0) { %>Escala — todo o período<% } else if (mes === 0) { %>Escala de <%= _anoTxt %> (todos os meses)<% } else { %>Escala de <%= mesNome %> <%= _anoTxt %><% } %>
+      <% if (filtros.ministro) { %><span style="font-size:13px;font-weight:600;color:#718096"> · Ministro: "<%= filtros.ministro %>"</span><% } %>
+    </span>
+    <span style="font-size:13px;color:#718096;margin-left:10px">
+      <%= escalas.length %> registro<%= escalas.length !== 1 ? 's' : '' %>
+    </span>
+  </div>
+</div>
+
+<!-- Grid de resultados -->
+<% if (escalas.length === 0) { %>
+  <div class="card">
+    <div class="empty-state">
+      <i class="fas fa-file-alt"></i>
+      <p>Nenhuma escala encontrada para os filtros selecionados.</p>
+    </div>
+  </div>
+<% } else { %>
+<div class="card" style="padding:0;overflow:hidden">
+  <div class="table-wrapper">
+    <table id="tabela-relatorio">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Turno</th>
+          <th>Igreja</th>
+          <th>Ministro</th>
+          <th>Chamado</th>
+          <th>Tema</th>
+          <th>Status</th>
+          <th>Aprovado por</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% const chamadoClass = { 'Apóstolo':'apostolo','Evangelista':'evangelista','Pastor':'pastor','Mestre':'mestre','Profeta':'profeta' }; %>
+        <% const statusMap = { pendente: {label:'Pendente',icon:'clock',color:'#f5a623'}, aprovado: {label:'Aprovado',icon:'check-circle',color:'#43a047'}, rejeitado: {label:'Rejeitado',icon:'times-circle',color:'#e53935'} }; %>
+        <% escalas.forEach(e => {
+          const d = new Date(e.data);
+          d.setHours(12);
+          const dateStr = d.toLocaleDateString('pt-BR', {weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'});
+          const st = statusMap[e.status] || statusMap.pendente;
+        %>
+        <tr>
+          <td style="white-space:nowrap;font-weight:700;color:#1a2332"><%= dateStr %></td>
+          <td>
+            <% if(e.turno==='Manhã') { %><span style="color:#f59e0b;font-weight:700;font-size:12px"><i class="fas fa-sun"></i> Manhã</span>
+            <% } else if(e.turno==='Tarde') { %><span style="color:#C2410C;font-weight:700;font-size:12px"><i class="fas fa-cloud-sun"></i> Tarde</span>
+            <% } else { %><span style="color:#01539D;font-weight:700;font-size:12px"><i class="fas fa-moon"></i> Noite</span><% } %>
+          </td>
+          <td>
+            <div style="font-weight:700;font-size:13px"><%= e.igreja_nome %></div>
+            <div style="font-size:11px;color:#718096"><%= e.igreja_sigla %></div>
+          </td>
+          <td style="font-weight:700"><%= e.ministro_nome %></td>
+          <td>
+            <div style="display:flex;flex-wrap:wrap;gap:3px">
+              <% var chs = (e.chamados && Array.isArray(e.chamados) && e.chamados.length > 0) ? e.chamados : (e.chamado ? [e.chamado] : []); %>
+              <% if (chs.length === 0) { %><span style="color:var(--text-light);font-size:12px">—</span><% } %>
+              <% chs.forEach(function(ch) { %>
+                <span class="badge badge-<%= chamadoClass[ch] || 'pastor' %>"><%= ch %></span>
+              <% }); %>
+            </div>
+          </td>
+          <td style="color:#4a5568;font-size:13px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="<%= e.tema || '' %>">
+            <%= e.tema || '—' %>
+          </td>
+          <td>
+            <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:<%= st.color %>">
+              <i class="fas fa-<%= st.icon %>"></i> <%= st.label %>
+            </span>
+          </td>
+          <td style="font-size:12px;color:#718096">
+            <% if(e.aprovado_por_nome) { %>
+              <%= e.aprovado_por_nome %><br>
+              <span style="font-size:11px"><%= new Date(e.aprovado_em).toLocaleDateString('pt-BR') %></span>
+            <% } else { %>—<% } %>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<% } %>
+
+<!-- Resumo por Igreja -->
+<% if (escalas.length > 0) { %>
+<div style="margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
+  <%
+    const porIgreja = {};
+    escalas.forEach(e => {
+      if (!porIgreja[e.igreja_nome]) porIgreja[e.igreja_nome] = 0;
+      porIgreja[e.igreja_nome]++;
+    });
+  %>
+  <% Object.entries(porIgreja).sort((a,b)=>b[1]-a[1]).slice(0,6).forEach(([nome, total]) => { %>
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fas fa-church"></i></div>
+    <div>
+      <div class="stat-number" style="font-size:22px"><%= total %></div>
+      <div class="stat-label"><%= nome %></div>
+    </div>
+  </div>
+  <% }) %>
+</div>
+<% } %>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+function exportarExcel() {
+  const table = document.getElementById('tabela-relatorio');
+  if (!table) { alert('Nenhum dado para exportar.'); return; }
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.table_to_sheet(table);
+
+  // Largura das colunas
+  ws['!cols'] = [
+    {wch:22},{wch:10},{wch:25},{wch:22},{wch:14},{wch:35},{wch:12},{wch:20}
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Escala');
+  const mes = '<%= mes === 0 ? "Todos" : mesNome %>';
+  const ano = '<%= ano === 0 ? "Todos" : ano %>';
+  XLSX.writeFile(wb, `Escala_${mes}_${ano}.xlsx`);
+}
+
+// Busca por ministro independente do mês/ano:
+// ao digitar um nome e filtrar, o mês e o ano passam para "Todos".
+// Depois, se quiser, é só escolher um mês/ano para refinar.
+(function() {
+  const form  = document.getElementById('form-filtro');
+  const campo = document.getElementById('filtro-ministro');
+  const selMes = document.getElementById('filtro-mes');
+  const selAno = document.getElementById('filtro-ano');
+  if (!form || !campo) return;
+  const valorInicial = campo.value.trim();
+  form.addEventListener('submit', function() {
+    const valor = campo.value.trim();
+    if (valor && valor !== valorInicial) {
+      if (selMes) selMes.value = '0';
+      if (selAno) selAno.value = '0';
+    }
+  });
+})();
+</script>
+
+<%- include('../partials/footer') %>

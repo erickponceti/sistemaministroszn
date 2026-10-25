@@ -1,0 +1,84 @@
+<%- include('../partials/header', {page:'manutencoes'}) %>
+
+<div class="breadcrumb">
+  <a href="/manutencoes"><i class="fas fa-wrench"></i> Manutenções</a>
+  <i class="fas fa-chevron-right"></i><span>Nova Manutenção</span>
+</div>
+<div class="page-header">
+  <div class="page-header-left"><h1><i class="fas fa-plus-circle" style="color:var(--warning)"></i> Registrar Manutenção</h1></div>
+</div>
+
+<form action="/manutencoes" method="POST">
+  <div class="card">
+    <div class="card-body">
+      <div class="form-row form-row-3">
+        <div class="form-group">
+          <label>Veículo <span class="req">*</span></label>
+          <select name="veiculo_id" required>
+            <option value="">— Selecionar —</option>
+            <% veiculos.forEach(v => { %><option value="<%= v.id %>"><%= v.placa %> — <%= v.modelo %></option><% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tipo de Serviço <span class="req">*</span></label>
+          <select name="tipo" required>
+            <option value="Troca de Óleo">Troca de Óleo</option>
+            <option value="Revisão Geral">Revisão Geral</option>
+            <option value="Troca de Pneus">Troca de Pneus</option>
+            <option value="Freios">Freios</option>
+            <option value="Suspensão">Suspensão</option>
+            <option value="Elétrica">Elétrica</option>
+            <option value="Funilaria e Pintura">Funilaria e Pintura</option>
+            <option value="Vidro">Vidro</option>
+            <option value="Ar Condicionado">Ar Condicionado</option>
+            <option value="Cambio">Câmbio</option>
+            <option value="Motor">Motor</option>
+            <option value="Embreagem">Embreagem</option>
+            <option value="Outros">Outros</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Data da Manutenção <span class="req">*</span></label>
+          <input type="date" name="data_manutencao" required value="<%= new Date().toISOString().split('T')[0] %>">
+        </div>
+        <div class="form-group">
+          <label>Valor (R$)</label>
+          <input type="number" name="valor" step="0.01" min="0" placeholder="0,00">
+        </div>
+        <div class="form-group">
+          <label>KM na Manutenção</label>
+          <input type="number" name="km_manutencao" placeholder="Ex: 45000" min="0">
+        </div>
+        <div class="form-group">
+          <label>Fornecedor / Oficina</label>
+          <select name="fornecedor_id">
+            <option value="">— Selecionar —</option>
+            <% fornecedores.forEach(f => { %><option value="<%= f.id %>"><%= f.nome %></option><% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Próxima Revisão - KM</label>
+          <input type="number" name="proximo_km" placeholder="Ex: 50000" min="0">
+        </div>
+        <div class="form-group">
+          <label>Próxima Revisão - Data</label>
+          <input type="date" name="proxima_data">
+        </div>
+        <div class="form-group span-3">
+          <label>Descrição do Serviço</label>
+          <textarea name="descricao" rows="2" placeholder="Descreva o serviço realizado..."></textarea>
+        </div>
+        <div class="form-group span-3">
+          <label>Observações</label>
+          <textarea name="observacoes" rows="2" placeholder="Peças substituídas, garantia, etc."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+    <a href="/manutencoes" class="btn btn-outline"><i class="fas fa-times"></i> Cancelar</a>
+    <button type="submit" class="btn btn-warning btn-lg"><i class="fas fa-save"></i> Registrar Manutenção</button>
+  </div>
+</form>
+
+<%- include('../partials/footer') %>

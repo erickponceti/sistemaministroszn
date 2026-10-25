@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — SMZN</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="/img/logo.png" alt="SMZN — Sistema de Ministros Zona Norte" class="logo-img">
+      <% if (typeof usuarioLogado !== 'undefined' && usuarioLogado) { %>
+      <div class="sidebar-system-title">Sistema de Ministros Zona Norte</div>
+      <% } %>
+    </div>
+    <nav class="sidebar-nav">
+
+      <a href="/" class="nav-item <%= title === 'Dashboard' ? 'active' : '' %>">
+        <i class="fas fa-chart-pie"></i><span>Dashboard</span>
+      </a>
+
+      <!-- CADASTROS — admin pode tudo, secretaria so ve lista -->
+      <div class="nav-group">
+        <div class="nav-group-header nav-group-blue">
+          <i class="fas fa-folder-open"></i><span>Cadastros</span>
+        </div>
+        <div class="nav-group-items">
+          <a href="/igrejas" class="nav-item nav-sub <%= title.includes('Igreja') ? 'active' : '' %>">
+            <i class="fas fa-church"></i><span>Igrejas</span>
+          </a>
+          <a href="/ministros" class="nav-item nav-sub <%= title.includes('Ministro') ? 'active' : '' %>">
+            <i class="fas fa-user-tie"></i><span>Ministros</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- ESCALA -->
+      <div class="nav-group">
+        <div class="nav-group-header nav-group-teal">
+          <i class="fas fa-calendar-check"></i><span>Escala</span>
+        </div>
+        <div class="nav-group-items">
+          <a href="/agendamento" class="nav-item nav-sub <%= title === 'Agendamento' ? 'active' : '' %>">
+            <i class="fas fa-calendar-alt"></i><span>Agendamento</span>
+          </a>
+          <a href="/relatorio" class="nav-item nav-sub <%= title === 'Relatorio' ? 'active' : '' || title === 'Relatório' ? 'active' : '' %>">
+            <i class="fas fa-file-alt"></i><span>Relatorio</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- GESTAO -->
+      <div class="nav-group">
+        <div class="nav-group-header nav-group-purple">
+          <i class="fas fa-shield-alt"></i><span>Gestao</span>
+        </div>
+        <div class="nav-group-items">
+          <a href="/aprovacoes" class="nav-item nav-sub <%= title === 'Aprovações' ? 'active' : '' || title === 'Aprovacoes' ? 'active' : '' %>">
+            <i class="fas fa-check-double"></i>
+            <span>Aprovacoes</span>
+            <span class="nav-badge" id="badge-pendentes" style="display:none"></span>
+          </a>
+          <!-- Usuarios: somente admin ve -->
+          <% if (typeof usuarioLogado !== 'undefined' && usuarioLogado && usuarioLogado.perfil === 'admin') { %>
+          <a href="/usuarios" class="nav-item nav-sub <%= title === 'Usuarios' ? 'active' : '' %>">
+            <i class="fas fa-users-cog"></i><span>Usuarios</span>
+          </a>
+          <% } %>
+        </div>
+      </div>
+
+    </nav>
+
+    <!-- Footer usuario -->
+    <div class="sidebar-footer">
+      <% if (typeof usuarioLogado !== 'undefined' && usuarioLogado) { %>
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar"><%= usuarioLogado.nome.charAt(0).toUpperCase() %></div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name"><%= usuarioLogado.nome %></div>
+          <div class="sidebar-user-perfil <%= usuarioLogado.perfil === 'admin' ? 'perfil-admin' : 'perfil-user' %>">
+            <i class="fas fa-circle" style="font-size:5px;vertical-align:middle"></i>
+            <%= usuarioLogado.perfil === 'admin' ? 'Administrador' : usuarioLogado.perfil === 'secretaria' ? 'Secretaria' : 'Email' %>
+          </div>
+        </div>
+        <a href="/login/logout" class="sidebar-logout" title="Sair">
+          <i class="fas fa-sign-out-alt"></i>
+        </a>
+      </div>
+      <% } %>
+      <div class="footer-brand"><span class="brand-name">SMZN</span><span class="brand-sub">Sistema de Ministros Zona Norte</span></div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left"><h1 class="page-title"><%= title %><% if (title === 'Dashboard') { %> - Gerenciamento de Escalas dos Ministros Verbo Zona Norte Recife<% } %></h1></div>
+      <div class="topbar-right">
+        <% if (typeof usuarioLogado !== 'undefined' && usuarioLogado) { %>
+        <div class="topbar-user">
+          <i class="fas fa-user-circle"></i>
+          <span><%= usuarioLogado.nome %></span>
+          <% if (usuarioLogado.perfil === 'admin') { %>
+            <span class="badge badge-admin" style="margin-left:6px;font-size:10px">ADMIN</span>
+          <% } else if (usuarioLogado.perfil === 'secretaria') { %>
+            <span class="badge badge-evangelista" style="margin-left:6px;font-size:10px">SECRETARIA</span>
+          <% } %>
+        </div>
+        <% } %>
+      </div>
+    </header>
+    <div class="content-area">
+
+<script>
+async function loadPendentes() {
+  try {
+    var r = await fetch('/aprovacoes/api/pendentes-count');
+    var d = await r.json();
+    var b = document.getElementById('badge-pendentes');
+    if (b && d.total > 0) { b.textContent = d.total; b.style.display = 'inline-flex'; }
+  } catch(e) {}
+}
+loadPendentes();
+</script>

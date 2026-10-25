@@ -1,0 +1,96 @@
+<%- include('../partials/header', {page:'veiculos'}) %>
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1><i class="fas fa-car" style="color:var(--primary)"></i> Veículos</h1>
+    <p>Gerencie toda a frota de carros e motos</p>
+  </div>
+  <div class="page-header-actions">
+    <a href="/veiculos/novo" class="btn btn-primary"><i class="fas fa-plus"></i> Novo Veículo</a>
+  </div>
+</div>
+
+<form class="filter-bar" method="GET" action="/veiculos">
+  <input type="text" name="busca" placeholder="🔍 Buscar por placa, marca ou modelo..." value="<%= filtros.busca || '' %>">
+  <select name="tipo">
+    <option value="">Todos os tipos</option>
+    <option value="carro" <%= filtros.tipo === 'carro' ? 'selected' : '' %>>🚗 Carro</option>
+    <option value="moto" <%= filtros.tipo === 'moto' ? 'selected' : '' %>>🏍️ Moto</option>
+  </select>
+  <select name="status">
+    <option value="">Todos os status</option>
+    <option value="disponivel" <%= filtros.status === 'disponivel' ? 'selected' : '' %>>Disponível</option>
+    <option value="alugado" <%= filtros.status === 'alugado' ? 'selected' : '' %>>Alugado</option>
+    <option value="manutencao" <%= filtros.status === 'manutencao' ? 'selected' : '' %>>Manutenção</option>
+    <option value="inativo" <%= filtros.status === 'inativo' ? 'selected' : '' %>>Inativo</option>
+  </select>
+  <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Filtrar</button>
+  <a href="/veiculos" class="btn btn-outline btn-sm"><i class="fas fa-times"></i> Limpar</a>
+</form>
+
+<div class="table-wrapper">
+  <% if (veiculos.length === 0) { %>
+  <div class="empty-state">
+    <i class="fas fa-car"></i>
+    <p>Nenhum veículo encontrado. <a href="/veiculos/novo">Cadastre o primeiro!</a></p>
+  </div>
+  <% } else { %>
+  <table>
+    <thead>
+      <tr>
+        <th>Tipo</th>
+        <th>Placa</th>
+        <th>Veículo</th>
+        <th>Ano</th>
+        <th>KM Atual</th>
+        <th>Valor/Semana</th>
+        <th>Status</th>
+        <th>Proprietário</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% veiculos.forEach(v => { %>
+      <tr>
+        <td>
+          <span class="badge badge-<%= v.tipo %>">
+            <%= v.tipo === 'carro' ? '🚗' : '🏍️' %> <%= v.tipo.charAt(0).toUpperCase() + v.tipo.slice(1) %>
+          </span>
+        </td>
+        <td><span class="placa-badge"><%= v.placa %></span></td>
+        <td>
+          <strong><%= v.marca %> <%= v.modelo %></strong>
+          <br><span style="font-size:11px;color:#94A3B8;"><%= v.cor || '' %></span>
+        </td>
+        <td><span class="km-display"><%= v.ano_modelo || v.ano_fabricacao || '—' %></span></td>
+        <td><span class="km-display"><%= v.km_atual ? v.km_atual.toLocaleString('pt-BR') + ' km' : '—' %></span></td>
+        <td>
+          <% if (v.valor_semanal) { %>
+          <strong style="color:var(--success)">R$ <%= parseFloat(v.valor_semanal).toLocaleString('pt-BR',{minimumFractionDigits:2}) %></strong>
+          <% } else { %>—<% } %>
+        </td>
+        <td>
+          <span class="badge badge-<%= v.status %>">
+            <i class="fas fa-circle" style="font-size:6px;"></i> <%= v.status.charAt(0).toUpperCase() + v.status.slice(1) %>
+          </span>
+        </td>
+        <td><%= v.proprietario_nome || '—' %></td>
+        <td>
+          <div style="display:flex;gap:4px;">
+            <a href="/veiculos/<%= v.id %>" class="btn btn-outline btn-sm btn-icon" title="Ver detalhes"><i class="fas fa-eye"></i></a>
+            <a href="/veiculos/<%= v.id %>/editar" class="btn btn-outline btn-sm btn-icon" title="Editar"><i class="fas fa-edit"></i></a>
+            <% if (v.status === 'disponivel') { %>
+            <a href="/alugueis/novo?veiculo_id=<%= v.id %>" class="btn btn-success btn-sm" title="Alugar">
+              <i class="fas fa-key"></i>
+            </a>
+            <% } %>
+          </div>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

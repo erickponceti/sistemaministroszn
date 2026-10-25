@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<div class="auth-wrapper">
+  <div class="auth-bg-shapes"></div>
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon"><i class="fas fa-shield-alt"></i></div>
+      <div class="auth-logo-text"><span class="brand-name">ZeloFrota</span><span class="brand-sub">Gestão de Frota</span></div>
+    </div>
+    <h1 class="auth-title">Nova Senha</h1>
+    <form action="/redefinir-senha" method="POST" class="auth-form">
+      <input type="hidden" name="token" value="<%= token %>">
+      <div class="form-group">
+        <label>Nova Senha</label>
+        <input type="password" name="nova_senha" placeholder="••••••••" required minlength="6">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block btn-lg"><i class="fas fa-lock"></i> Redefinir Senha</button>
+    </form>
+  </div>
+</div>
+</body>
+</html>

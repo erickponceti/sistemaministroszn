@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — SMZN · Sistema de Ministros Zona Norte</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    :root {
+      --azul:#01539D; --azul-escuro:#0B2545; --azul-claro:#1C6FC0;
+      --creme:#EAF2FB; --creme-claro:#F7FAFE; --texto:#0B2545; --texto-suave:#5A6B82;
+    }
+    body { background:#fff; display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px; }
+    .login-box { background:var(--creme-claro); border-radius:24px; padding:22px 52px 20px; width:100%; max-width:480px; border:3px solid var(--azul); box-shadow:0 0 0 6px var(--creme), 0 0 0 7px rgba(1,83,157,.35), 0 18px 45px rgba(1,83,157,.18); }
+    .login-logo { text-align:center; margin-bottom:6px; }
+    .login-logo img { width:140px; max-width:50%; height:auto; mix-blend-mode:multiply; }
+    .login-title { font-size:26px; font-weight:900; color:var(--azul); margin-bottom:6px; text-align:center; }
+    .login-sub   { font-size:14px; color:var(--texto-suave); text-align:center; margin-bottom:14px; }
+    .login-error { background:#FEE2E2; border:1px solid #FECACA; color:#991B1B; border-radius:8px; padding:10px 14px; font-size:13px; font-weight:600; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+    .login-msg   { background:#e8f5ec; border:1px solid #bfe3ca; color:#1e5b33; border-radius:8px; padding:10px 14px; font-size:13px; font-weight:600; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+    .form-label  { color:var(--texto); font-weight:700; }
+    .input-icon  { position:relative; }
+    .input-icon i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--azul-claro); font-size:15px; }
+    .input-icon .form-control { padding-left:42px; height:42px; font-size:15px; background:#fff; border:1.5px solid #CBD9EA; border-radius:10px; color:var(--texto); }
+    .input-icon .form-control:focus { border-color:var(--azul); box-shadow:0 0 0 3px rgba(1,83,157,.15); outline:none; }
+    .btn-login { width:100%; padding:12px; background:var(--azul); color:var(--creme); border:none; border-radius:10px; font-family:'Nunito',sans-serif; font-size:16px; font-weight:800; cursor:pointer; transition:background .2s, transform .1s; margin-top:10px; }
+    .btn-login:hover { background:var(--azul-claro); }
+    .btn-login:active { transform:translateY(1px); }
+    .esqueci { display:block; text-align:center; margin-top:10px; font-size:13px; color:var(--azul); text-decoration:none; font-weight:700; }
+    .esqueci:hover { text-decoration:underline; }
+    .login-hint { background:var(--creme); border:1px solid #D6E3F1; border-radius:8px; padding:9px 14px; font-size:12px; color:var(--texto-suave); margin-top:12px; line-height:1.55; }
+    .login-hint strong { color:var(--azul); }
+    .login-brand { text-align:center; margin-bottom:6px; }
+    .login-sigla { font-size:30px; font-weight:900; letter-spacing:4px; color:var(--azul); line-height:1.1; }
+    .login-nome  { font-size:14px; font-weight:800; color:var(--texto); margin-top:2px; }
+    .login-box .form-group { margin-bottom:12px; }
+    @media (max-width:520px) { .login-box { padding:36px 24px 30px; } .login-sigla { font-size:26px; } }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <div class="login-logo">
+      <img src="/img/logo.png" alt="SMZN — Sistema de Ministros Zona Norte">
+    </div>
+    <div class="login-brand">
+      <div class="login-sigla">SMZN</div>
+      <div class="login-nome">Sistema de Ministros Zona Norte</div>
+    </div>
+    <div class="login-sub">Faça login para acessar o sistema</div>
+
+    <% if (typeof erro !== 'undefined' && erro) { %>
+      <div class="login-error"><i class="fas fa-exclamation-circle"></i> <%= erro %></div>
+    <% } %>
+    <% if (typeof msg !== 'undefined' && msg) { %>
+      <div class="login-msg"><i class="fas fa-check-circle"></i> <%= msg %></div>
+    <% } %>
+
+    <form action="/login" method="POST">
+      <div class="form-group">
+        <label class="form-label">E-mail</label>
+        <div class="input-icon">
+          <i class="fas fa-envelope"></i>
+          <input type="email" name="email" class="form-control" placeholder="seu@email.com" required autofocus>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Senha</label>
+        <div class="input-icon">
+          <i class="fas fa-lock"></i>
+          <input type="password" name="senha" class="form-control" placeholder="••••••••" required>
+        </div>
+      </div>
+      <button type="submit" class="btn-login">
+        <i class="fas fa-sign-in-alt"></i> Entrar
+      </button>
+    </form>
+  </div>
+</body>
+</html>

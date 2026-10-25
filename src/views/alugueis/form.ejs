@@ -1,0 +1,106 @@
+<%- include('../partials/header', {page:'alugueis'}) %>
+
+<div class="breadcrumb">
+  <a href="/alugueis"><i class="fas fa-key"></i> Aluguéis</a>
+  <i class="fas fa-chevron-right"></i>
+  <span>Novo Aluguel</span>
+</div>
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1><i class="fas fa-plus-circle" style="color:var(--success)"></i> Novo Aluguel</h1>
+    <p>Após salvar, você será redirecionado para fazer o check-in do veículo</p>
+  </div>
+</div>
+
+<form action="/alugueis" method="POST">
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-header"><div class="card-title"><i class="fas fa-info-circle"></i> Dados do Contrato</div></div>
+    <div class="card-body">
+      <div class="form-row form-row-2">
+        <div class="form-group">
+          <label>Veículo <span class="req">*</span></label>
+          <select name="veiculo_id" id="veiculo_sel" required onchange="preencherValor()">
+            <option value="">— Selecionar Veículo —</option>
+            <% veiculos.forEach(v => { %>
+            <option value="<%= v.id %>" data-valor="<%= v.valor_semanal || '' %>">
+              🚗 <%= v.placa %> — <%= v.marca %> <%= v.modelo %>
+              <% if (v.valor_semanal) { %>(R$ <%= parseFloat(v.valor_semanal).toFixed(2) %>/sem)<% } %>
+            </option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Cliente <span class="req">*</span></label>
+          <select name="cliente_id" required>
+            <option value="">— Selecionar Cliente —</option>
+            <% clientes.forEach(c => { %>
+            <option value="<%= c.id %>"><%= c.nome %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Data de Início <span class="req">*</span></label>
+          <input type="date" name="data_inicio" required id="dt_inicio"
+            value="<%= new Date().toISOString().split('T')[0] %>"
+            onchange="calcularFim()">
+        </div>
+        <div class="form-group">
+          <label>Data de Término Prevista <span class="req">*</span></label>
+          <input type="date" name="data_fim_prevista" required id="dt_fim">
+        </div>
+        <div class="form-group">
+          <label>Semanas</label>
+          <select id="num_semanas" onchange="calcularFim()">
+            <option value="1">1 semana</option>
+            <option value="2">2 semanas</option>
+            <option value="4">4 semanas (1 mês)</option>
+            <option value="8">8 semanas (2 meses)</option>
+            <option value="12">12 semanas (3 meses)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Valor por Semana (R$) <span class="req">*</span></label>
+          <input type="number" name="valor_semanal" id="valor_semanal" step="0.01" min="0" placeholder="0.00" required>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:8px;">
+        <label>Observações</label>
+        <textarea name="observacoes" rows="2" placeholder="Condições especiais do contrato..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;justify-content:flex-end;">
+    <a href="/alugueis" class="btn btn-outline"><i class="fas fa-times"></i> Cancelar</a>
+    <button type="submit" class="btn btn-success btn-lg"><i class="fas fa-key"></i> Criar Aluguel e Ir para Check-in</button>
+  </div>
+</form>
+
+<script>
+function preencherValor() {
+  const sel = document.getElementById('veiculo_sel');
+  const opt = sel.options[sel.selectedIndex];
+  const valor = opt.dataset.valor;
+  if (valor) document.getElementById('valor_semanal').value = valor;
+}
+
+function calcularFim() {
+  const inicio = document.getElementById('dt_inicio').value;
+  const semanas = parseInt(document.getElementById('num_semanas').value);
+  if (!inicio) return;
+  const d = new Date(inicio + 'T12:00:00');
+  d.setDate(d.getDate() + (semanas * 7));
+  document.getElementById('dt_fim').value = d.toISOString().split('T')[0];
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+  const hoje = new Date();
+  const fim = new Date(hoje);
+  fim.setDate(fim.getDate() + 7);
+  document.getElementById('dt_fim').value = fim.toISOString().split('T')[0];
+});
+</script>
+
+<%- include('../partials/footer') %>

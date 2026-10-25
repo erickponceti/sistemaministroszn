@@ -1,0 +1,86 @@
+<%- include('../partials/header', {page:'alugueis'}) %>
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1><i class="fas fa-key" style="color:var(--primary)"></i> Aluguéis</h1>
+    <p>Controle de todos os contratos de aluguel</p>
+  </div>
+  <div class="page-header-actions">
+    <a href="/alugueis/novo" class="btn btn-primary"><i class="fas fa-plus"></i> Novo Aluguel</a>
+  </div>
+</div>
+
+<form class="filter-bar" method="GET">
+  <select name="status">
+    <option value="">Todos os status</option>
+    <option value="ativo" <%= filtros.status === 'ativo' ? 'selected' : '' %>>Ativos</option>
+    <option value="encerrado" <%= filtros.status === 'encerrado' ? 'selected' : '' %>>Encerrados</option>
+    <option value="atrasado" <%= filtros.status === 'atrasado' ? 'selected' : '' %>>Atrasados</option>
+  </select>
+  <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-filter"></i> Filtrar</button>
+  <a href="/alugueis" class="btn btn-outline btn-sm"><i class="fas fa-times"></i> Limpar</a>
+</form>
+
+<div class="table-wrapper">
+  <% if (alugueis.length === 0) { %>
+  <div class="empty-state"><i class="fas fa-key"></i><p>Nenhum aluguel encontrado. <a href="/alugueis/novo">Criar primeiro aluguel</a></p></div>
+  <% } else { %>
+  <table>
+    <thead>
+      <tr>
+        <th>Veículo</th><th>Cliente</th><th>Início</th><th>Vencimento</th>
+        <th>Dias Rest.</th><th>Valor/Sem</th><th>Status</th><th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% alugueis.forEach(a => { %>
+      <tr class="<%= a.dias_restantes <= 0 && a.status === 'ativo' ? 'highlight-danger' : (a.dias_restantes <= 3 && a.status === 'ativo' ? 'highlight-warning' : '') %>">
+        <td>
+          <span class="placa-badge"><%= a.placa %></span>
+          <span style="margin-left:6px;font-size:12px;color:#64748B;"><%= a.marca %> <%= a.modelo %></span>
+        </td>
+        <td><strong><%= a.cliente_nome %></strong></td>
+        <td><%= new Date(a.data_inicio).toLocaleDateString('pt-BR') %></td>
+        <td><%= new Date(a.data_fim_prevista).toLocaleDateString('pt-BR') %></td>
+        <td>
+          <% if (a.status === 'ativo') { %>
+          <span class="dias-badge <%= a.dias_restantes <= 0 ? 'dias-danger' : a.dias_restantes <= 3 ? 'dias-danger' : a.dias_restantes <= 7 ? 'dias-warning' : 'dias-ok' %>">
+            <i class="fas fa-clock"></i>
+            <%= a.dias_restantes <= 0 ? 'VENCIDO' : a.dias_restantes + ' dia(s)' %>
+          </span>
+          <% } else { %>—<% } %>
+        </td>
+        <td><strong style="color:var(--success)">R$ <%= parseFloat(a.valor_semanal).toLocaleString('pt-BR',{minimumFractionDigits:2}) %></strong></td>
+        <td><span class="badge badge-<%= a.status %>"><i class="fas fa-circle" style="font-size:6px;"></i> <%= a.status.charAt(0).toUpperCase() + a.status.slice(1) %></span></td>
+        <td>
+          <div style="display:flex;gap:4px;">
+            <a href="/alugueis/<%= a.id %>" class="btn btn-outline btn-sm btn-icon"><i class="fas fa-eye"></i></a>
+            <button class="btn btn-primary btn-sm btn-icon" onclick="abrirComparacao(<%= a.id %>)" title="Comparar checklist">
+              <i class="fas fa-balance-scale"></i>
+            </button>
+            <% if (a.cliente_whatsapp) { %>
+            <button class="btn btn-whatsapp btn-sm btn-icon" onclick="enviarWhatsApp('<%= a.cliente_whatsapp %>','<%= a.cliente_nome %>','<%= a.placa %>','<%= a.dias_restantes %>')" title="WhatsApp">
+              <i class="fab fa-whatsapp"></i>
+            </button>
+            <% } %>
+          </div>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</div>
+
+<!-- Modal Comparação -->
+<div class="modal-backdrop" id="modal-comparacao">
+  <div class="modal" style="max-width:960px;">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fas fa-balance-scale" style="color:var(--primary)"></i> Módulo de Comparação — Check-in vs Check-out</div>
+      <button class="modal-close" onclick="closeModal('modal-comparacao')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="comparacao-body"></div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

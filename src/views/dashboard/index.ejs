@@ -1,0 +1,258 @@
+<%- include('../partials/header', {page:'dashboard'}) %>
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+  <a href="/veiculos" class="stat-card">
+    <div class="stat-icon blue"><i class="fas fa-car"></i></div>
+    <div class="stat-info">
+      <div class="stat-value"><%= stats.totalVeiculos %></div>
+      <div class="stat-label">Total de Veículos</div>
+    </div>
+  </a>
+  <a href="/veiculos?status=alugado" class="stat-card">
+    <div class="stat-icon green"><i class="fas fa-key"></i></div>
+    <div class="stat-info">
+      <div class="stat-value"><%= stats.veiculosAlugados %></div>
+      <div class="stat-label">Veículos Alugados</div>
+    </div>
+  </a>
+  <a href="/veiculos?status=disponivel" class="stat-card">
+    <div class="stat-icon yellow"><i class="fas fa-parking"></i></div>
+    <div class="stat-info">
+      <div class="stat-value"><%= stats.veiculosDisponiveis %></div>
+      <div class="stat-label">Disponíveis</div>
+    </div>
+  </a>
+  <a href="/pessoas?tipo=cliente" class="stat-card">
+    <div class="stat-icon purple"><i class="fas fa-users"></i></div>
+    <div class="stat-info">
+      <div class="stat-value"><%= stats.totalClientes %></div>
+      <div class="stat-label">Clientes Ativos</div>
+    </div>
+  </a>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fas fa-arrow-up"></i></div>
+    <div class="stat-info">
+      <div class="stat-value" style="font-size:18px;">R$ <%= stats.receitaMes.toLocaleString('pt-BR',{minimumFractionDigits:2}) %></div>
+      <div class="stat-label">Receita do Mês</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon red"><i class="fas fa-arrow-down"></i></div>
+    <div class="stat-info">
+      <div class="stat-value" style="font-size:18px;">R$ <%= stats.custosMes.toLocaleString('pt-BR',{minimumFractionDigits:2}) %></div>
+      <div class="stat-label">Custos do Mês</div>
+    </div>
+  </div>
+  <div class="stat-card" style="<%= stats.lucroMes >= 0 ? 'border-color:#10B981' : 'border-color:#EF4444' %>">
+    <div class="stat-icon <%= stats.lucroMes >= 0 ? 'green' : 'red' %>"><i class="fas fa-chart-line"></i></div>
+    <div class="stat-info">
+      <div class="stat-value" style="font-size:18px;color:<%= stats.lucroMes >= 0 ? '#10B981' : '#EF4444' %>">
+        R$ <%= Math.abs(stats.lucroMes).toLocaleString('pt-BR',{minimumFractionDigits:2}) %>
+      </div>
+      <div class="stat-label">Lucro Líquido</div>
+      <div class="stat-sub"><%= stats.lucroMes >= 0 ? '✅ Positivo' : '⚠️ Negativo' %></div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="charts-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+  <div class="chart-card">
+    <div class="chart-title"><i class="fas fa-chart-bar"></i> Crescimento da Frota</div>
+    <canvas id="chartFrota" height="200"></canvas>
+  </div>
+  <div class="chart-card" style="grid-column: span 2;">
+    <div class="chart-title"><i class="fas fa-chart-line"></i> Fluxo de Caixa</div>
+    <canvas id="chartFluxo" height="200"></canvas>
+  </div>
+</div>
+
+<div class="charts-grid" style="margin-bottom:24px;">
+  <div class="chart-card" style="grid-column: span 2;">
+    <div class="chart-title"><i class="fas fa-trophy"></i> Rentabilidade por Veículo</div>
+    <canvas id="chartRentabilidade" height="180"></canvas>
+  </div>
+</div>
+
+<!-- Vencimentos -->
+<% if (vencendoBreve.length > 0) { %>
+<div class="card vencimentos-card" style="margin-bottom:24px;">
+  <div class="card-header">
+    <div class="card-title" style="color:#D97706;">
+      <i class="fas fa-exclamation-triangle" style="color:#F59E0B;"></i>
+      Contratos Vencendo em Breve
+      <span class="badge" style="background:#FEF3C7;color:#92400E;font-size:11px;"><%= vencendoBreve.length %> alerta(s)</span>
+    </div>
+    <a href="/alugueis?status=ativo" class="btn btn-outline btn-sm">Ver Todos</a>
+  </div>
+  <div class="table-wrapper" style="border:none;border-radius:0;">
+    <table>
+      <thead>
+        <tr>
+          <th>Veículo</th>
+          <th>Cliente</th>
+          <th>Vencimento</th>
+          <th>Dias Restantes</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% vencendoBreve.forEach(v => { %>
+        <tr class="<%= v.dias_restantes <= 0 ? 'highlight-danger' : v.dias_restantes <= 3 ? 'highlight-warning' : '' %>">
+          <td>
+            <span class="placa-badge"><%= v.placa %></span>
+            <span style="margin-left:6px;font-size:12px;color:#64748B;"><%= v.marca %> <%= v.modelo %></span>
+          </td>
+          <td><strong><%= v.cliente_nome %></strong></td>
+          <td><%= new Date(v.data_fim_prevista).toLocaleDateString('pt-BR') %></td>
+          <td>
+            <span class="dias-badge <%= v.dias_restantes <= 0 ? 'dias-danger' : v.dias_restantes <= 3 ? 'dias-danger' : 'dias-warning' %>">
+              <i class="fas fa-clock"></i>
+              <%= v.dias_restantes <= 0 ? 'VENCIDO' : v.dias_restantes + ' dia(s)' %>
+            </span>
+          </td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <a href="/alugueis/<%= v.id %>" class="btn btn-outline btn-sm"><i class="fas fa-eye"></i></a>
+              <% if (v.cliente_whatsapp) { %>
+              <button class="btn btn-whatsapp btn-sm" onclick="enviarWhatsApp('<%= v.cliente_whatsapp %>','<%= v.cliente_nome %>','<%= v.placa %>','<%= v.dias_restantes %>')">
+                <i class="fab fa-whatsapp"></i> Avisar
+              </button>
+              <% } %>
+            </div>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<% } %>
+
+<!-- Aluguéis Ativos -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-list"></i> Aluguéis Ativos Recentes</div>
+    <div style="display:flex;gap:8px;">
+      <a href="/alugueis/novo" class="btn btn-success btn-sm"><i class="fas fa-plus"></i> Novo Aluguel</a>
+      <a href="/alugueis" class="btn btn-outline btn-sm">Ver Todos</a>
+    </div>
+  </div>
+  <div class="table-wrapper" style="border:none;border-radius:0;">
+    <% if (alugueisAtivos.length === 0) { %>
+    <div class="empty-state"><i class="fas fa-key"></i><p>Nenhum aluguel ativo no momento.</p></div>
+    <% } else { %>
+    <table>
+      <thead>
+        <tr><th>Veículo</th><th>Cliente</th><th>Início</th><th>Término Previsto</th><th>Valor/Semana</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% alugueisAtivos.forEach(a => { %>
+        <tr>
+          <td>
+            <span class="placa-badge"><%= a.placa %></span>
+            <span style="margin-left:6px;font-size:12px;color:#64748B;"><%= a.marca %> <%= a.modelo %></span>
+          </td>
+          <td><strong><%= a.cliente_nome %></strong></td>
+          <td><%= new Date(a.data_inicio).toLocaleDateString('pt-BR') %></td>
+          <td><%= new Date(a.data_fim_prevista).toLocaleDateString('pt-BR') %></td>
+          <td><strong>R$ <%= parseFloat(a.valor_semanal).toLocaleString('pt-BR',{minimumFractionDigits:2}) %></strong></td>
+          <td><span class="badge badge-ativo"><i class="fas fa-circle" style="font-size:6px;"></i> Ativo</span></td>
+          <td><a href="/alugueis/<%= a.id %>" class="btn btn-ghost btn-sm"><i class="fas fa-arrow-right"></i></a></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <% } %>
+  </div>
+</div>
+
+<!-- Modal Comparação -->
+<div class="modal-backdrop" id="modal-comparacao">
+  <div class="modal" style="max-width:960px;">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fas fa-balance-scale" style="color:var(--primary)"></i> Módulo de Comparação — Check-in vs Check-out</div>
+      <button class="modal-close" onclick="closeModal('modal-comparacao')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="comparacao-body">
+      <div class="empty-state"><i class="fas fa-clipboard-list"></i><p>Selecione um aluguel para comparar.</p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const frotaData = <%- JSON.stringify(graficos.crescimentoFrota) %>;
+const fluxoData = <%- JSON.stringify(graficos.fluxoCaixa) %>;
+const rentData = <%- JSON.stringify(graficos.rentabilidade) %>;
+
+// Frota chart
+new Chart(document.getElementById('chartFrota'), {
+  type: 'bar',
+  data: {
+    labels: frotaData.map(d => d.mes),
+    datasets: [{
+      label: 'Novos Veículos',
+      data: frotaData.map(d => d.novos),
+      backgroundColor: 'rgba(14,165,233,0.8)',
+      borderRadius: 6,
+    }]
+  },
+  options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+});
+
+// Fluxo caixa
+new Chart(document.getElementById('chartFluxo'), {
+  type: 'line',
+  data: {
+    labels: fluxoData.map(d => d.mes),
+    datasets: [
+      {
+        label: 'Receita',
+        data: fluxoData.map(d => parseFloat(d.receita)),
+        borderColor: '#10B981',
+        backgroundColor: 'rgba(16,185,129,0.1)',
+        fill: true,
+        tension: 0.4,
+        borderWidth: 2.5,
+        pointBackgroundColor: '#10B981',
+      },
+      {
+        label: 'Custos',
+        data: fluxoData.map(d => parseFloat(d.custos)),
+        borderColor: '#EF4444',
+        backgroundColor: 'rgba(239,68,68,0.1)',
+        fill: true,
+        tension: 0.4,
+        borderWidth: 2.5,
+        pointBackgroundColor: '#EF4444',
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'top' } },
+    scales: { y: { beginAtZero: true, ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR') } } }
+  }
+});
+
+// Rentabilidade
+new Chart(document.getElementById('chartRentabilidade'), {
+  type: 'bar',
+  data: {
+    labels: rentData.map(d => d.placa + ' ' + d.modelo),
+    datasets: [
+      { label: 'Receita', data: rentData.map(d => parseFloat(d.receita)), backgroundColor: 'rgba(14,165,233,0.8)', borderRadius: 4 },
+      { label: 'Custos', data: rentData.map(d => parseFloat(d.custos)), backgroundColor: 'rgba(239,68,68,0.7)', borderRadius: 4 },
+      { label: 'Lucro', data: rentData.map(d => parseFloat(d.lucro)), backgroundColor: 'rgba(16,185,129,0.8)', borderRadius: 4 }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'top' } },
+    scales: { y: { beginAtZero: true, ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR') } } }
+  }
+});
+</script>
+
+<%- include('../partials/footer') %>

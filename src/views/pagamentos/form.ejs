@@ -1,0 +1,110 @@
+<%- include('../partials/header', {page:'pagamentos'}) %>
+
+<div class="breadcrumb">
+  <a href="/pagamentos"><i class="fas fa-money-bill-wave"></i> Pagamentos</a>
+  <i class="fas fa-chevron-right"></i><span>Registrar</span>
+</div>
+<div class="page-header">
+  <div class="page-header-left"><h1><i class="fas fa-plus-circle" style="color:var(--success)"></i> Registrar Pagamento</h1></div>
+</div>
+
+<% if (alugueis.length === 0) { %>
+<div class="alert alert-warning">
+  <i class="fas fa-exclamation-triangle"></i>
+  <strong>Nenhum contrato encontrado.</strong> Crie um aluguel primeiro.
+  <a href="/alugueis/novo" class="btn btn-primary btn-sm" style="margin-left:12px;"><i class="fas fa-plus"></i> Novo Aluguel</a>
+</div>
+<% } %>
+
+<form action="/pagamentos" method="POST">
+  <div class="card">
+    <div class="card-body">
+      <div class="form-row form-row-2">
+
+        <div class="form-group" style="grid-column:span 2;">
+          <label>Aluguel / Contrato <span class="req">*</span></label>
+          <select name="aluguel_id" id="sel_aluguel" required onchange="preencherValor()">
+            <option value="">— Selecione o contrato —</option>
+            <% const ativos    = alugueis.filter(a => a.status === 'ativo' || a.status === 'atrasado'); %>
+            <% const encerrados = alugueis.filter(a => a.status === 'encerrado'); %>
+            <% if (ativos.length > 0) { %>
+            <optgroup label="Contratos Ativos">
+              <% ativos.forEach(a => { %>
+              <option value="<%= a.id %>" data-valor="<%= a.valor_semanal||'' %>" <%= aluguel_pre==a.id?'selected':'' %>>
+                [ATIVO] <%= a.placa %> — <%= a.modelo %> | <%= a.cliente_nome %> | R$ <%= a.valor_semanal ? parseFloat(a.valor_semanal).toFixed(2) : '0.00' %>/sem
+              </option>
+              <% }) %>
+            </optgroup>
+            <% } %>
+            <% if (encerrados.length > 0) { %>
+            <optgroup label="Contratos Encerrados">
+              <% encerrados.forEach(a => { %>
+              <option value="<%= a.id %>" data-valor="<%= a.valor_semanal||'' %>" <%= aluguel_pre==a.id?'selected':'' %>>
+                [ENCERRADO] <%= a.placa %> — <%= a.modelo %> | <%= a.cliente_nome %>
+              </option>
+              <% }) %>
+            </optgroup>
+            <% } %>
+          </select>
+          <div id="preview-box" style="display:none;margin-top:8px;padding:10px 14px;background:#F0FDF4;border:1.5px solid #86EFAC;border-radius:8px;font-size:13px;">
+            <i class="fas fa-info-circle" style="color:#10B981"></i>
+            Valor semanal: <strong id="preview-valor" style="color:#10B981"></strong>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Valor Recebido (R$) <span class="req">*</span></label>
+          <input type="number" name="valor" id="campo_valor" step="0.01" min="0.01" placeholder="0,00" required>
+        </div>
+        <div class="form-group">
+          <label>Data do Pagamento <span class="req">*</span></label>
+          <input type="date" name="data_pagamento" required value="<%= new Date().toISOString().split('T')[0] %>">
+        </div>
+        <div class="form-group">
+          <label>Forma de Pagamento</label>
+          <select name="forma_pagamento">
+            <option value="pix">PIX</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="cartao">Cartão</option>
+            <option value="transferencia">Transferência</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Referência — Semana de</label>
+          <input type="date" name="referencia_semana">
+        </div>
+        <div class="form-group" style="grid-column:span 2;">
+          <label>Observações</label>
+          <input type="text" name="observacoes" placeholder="Comprovante, nota, etc.">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+    <a href="/pagamentos" class="btn btn-outline"><i class="fas fa-times"></i> Cancelar</a>
+    <button type="submit" class="btn btn-success btn-lg"><i class="fas fa-save"></i> Registrar Pagamento</button>
+  </div>
+</form>
+
+<script>
+function preencherValor() {
+  const sel = document.getElementById('sel_aluguel');
+  const opt = sel.options[sel.selectedIndex];
+  const valor = opt ? opt.dataset.valor : '';
+  const box = document.getElementById('preview-box');
+  const campoValor = document.getElementById('campo_valor');
+  if (valor) {
+    document.getElementById('preview-valor').textContent =
+      'R$ ' + parseFloat(valor).toLocaleString('pt-BR',{minimumFractionDigits:2}) + ' / semana';
+    box.style.display = 'block';
+    if (!campoValor.value) campoValor.value = parseFloat(valor).toFixed(2);
+  } else {
+    box.style.display = 'none';
+  }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('sel_aluguel').value) preencherValor();
+});
+</script>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,212 @@
+<%- include('../partials/header', {page:'checklists'}) %>
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1><i class="fas fa-clipboard-check" style="color:var(--primary)"></i> Checklists</h1>
+    <p>Registro de inspeções de check-in e check-out</p>
+  </div>
+  <div class="page-header-actions">
+    <a href="/checklists/novo?tipo=checkin" class="btn btn-success"><i class="fas fa-sign-in-alt"></i> Novo Check-in</a>
+    <a href="/checklists/novo?tipo=checkout" class="btn btn-primary"><i class="fas fa-sign-out-alt"></i> Novo Check-out</a>
+  </div>
+</div>
+
+<!-- Barra de busca -->
+<form class="filter-bar" method="GET" action="/checklists" id="form-busca">
+  <div style="position:relative;flex:1;min-width:220px;max-width:380px;">
+    <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94A3B8;pointer-events:none;"></i>
+    <input
+      type="text"
+      name="busca"
+      id="input-busca"
+      placeholder="Buscar por placa, modelo, marca ou cliente..."
+      value="<%= filtros.busca %>"
+      autocomplete="off"
+      style="padding-left:36px;"
+      oninput="filtrarTabela(this.value)"
+    >
+  </div>
+  <select name="tipo_filtro" onchange="this.form.submit()" style="width:auto;min-width:160px;">
+    <option value="">Todos os tipos</option>
+    <option value="checkin"  <%= filtros.tipo_filtro === 'checkin'  ? 'selected' : '' %>>Check-in</option>
+    <option value="checkout" <%= filtros.tipo_filtro === 'checkout' ? 'selected' : '' %>>Check-out</option>
+  </select>
+  <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i> Buscar</button>
+  <% if (filtros.busca || filtros.tipo_filtro) { %>
+  <a href="/checklists" class="btn btn-outline btn-sm"><i class="fas fa-times"></i> Limpar</a>
+  <% } %>
+</form>
+
+<!-- Contador de resultados -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+  <span id="contador" style="font-size:12.5px;color:#64748B;">
+    <i class="fas fa-list-ul"></i>
+    <strong id="num-resultados"><%= checklists.length %></strong> registro(s) encontrado(s)
+    <% if (filtros.busca) { %> para "<strong><%= filtros.busca %></strong>"<% } %>
+  </span>
+</div>
+
+<div class="table-wrapper">
+  <% if (checklists.length === 0) { %>
+  <div class="empty-state">
+    <i class="fas fa-clipboard-list"></i>
+    <% if (filtros.busca || filtros.tipo_filtro) { %>
+    <p>Nenhum checklist encontrado para este filtro.</p>
+    <a href="/checklists" class="btn btn-outline btn-sm" style="margin-top:12px;"><i class="fas fa-times"></i> Limpar filtro</a>
+    <% } else { %>
+    <p>Nenhum checklist registrado ainda.</p>
+    <% } %>
+  </div>
+  <% } else { %>
+  <table id="tabela-checklists">
+    <thead>
+      <tr>
+        <th>Tipo</th>
+        <th>Veículo</th>
+        <th>Cliente</th>
+        <th>Data/Hora</th>
+        <th>KM</th>
+        <th>Realizado por</th>
+        <th>Combustível</th>
+        <th>Motor</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="tbody-checklists">
+      <% checklists.forEach(c => { %>
+      <tr class="linha-checklist"
+          data-busca="<%= (c.placa + ' ' + c.modelo + ' ' + c.marca + ' ' + (c.cliente_nome||'')).toLowerCase() %>">
+        <td>
+          <span class="badge badge-<%= c.tipo %>">
+            <i class="fas fa-sign-<%= c.tipo === 'checkin' ? 'in' : 'out' %>-alt"></i>
+            <%= c.tipo === 'checkin' ? 'Check-in' : 'Check-out' %>
+          </span>
+        </td>
+        <td>
+          <span class="placa-badge"><%= c.placa %></span>
+          <span style="margin-left:6px;font-size:12px;color:#64748B;"><%= c.marca %> <%= c.modelo %></span>
+        </td>
+        <td><%= c.cliente_nome || '—' %></td>
+        <td><%= new Date(c.criado_em).toLocaleString('pt-BR') %></td>
+        <td class="km-display"><%= c.km_veiculo ? c.km_veiculo.toLocaleString('pt-BR') + ' km' : '—' %></td>
+        <td><%= c.realizado_por_nome || '—' %></td>
+        <td>
+          <% if (c.tanque_combustivel) { %>
+          <span class="badge <%= c.tanque_combustivel === 'Cheio' ? 'badge-disponivel' : 'badge-atrasado' %>">
+            <%= c.tanque_combustivel %>
+          </span>
+          <% } else { %>—<% } %>
+        </td>
+        <td>
+          <% if (c.motor) { %>
+          <span class="badge <%= c.motor === 'Funcionando' ? 'badge-disponivel' : 'badge-atrasado' %>">
+            <%= c.motor %>
+          </span>
+          <% } else { %>—<% } %>
+        </td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="abrirComparacao(<%= c.aluguel_id %>)">
+            <i class="fas fa-balance-scale"></i> Comparar
+          </button>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</div>
+
+<!-- Sem resultados na busca local -->
+<div id="sem-resultados" style="display:none;text-align:center;padding:40px 20px;color:#94A3B8;">
+  <i class="fas fa-search" style="font-size:36px;opacity:0.3;margin-bottom:12px;display:block;"></i>
+  <p>Nenhum registro encontrado para "<span id="termo-sem-resultado"></span>".</p>
+  <button onclick="limparBuscaLocal()" class="btn btn-outline btn-sm" style="margin-top:10px;">
+    <i class="fas fa-times"></i> Limpar busca
+  </button>
+</div>
+
+<!-- Modal Comparação -->
+<div class="modal-backdrop" id="modal-comparacao">
+  <div class="modal" style="max-width:960px;">
+    <div class="modal-header">
+      <div class="modal-title">
+        <i class="fas fa-balance-scale" style="color:var(--primary)"></i>
+        Módulo de Comparação — Check-in vs Check-out
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-comparacao')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="comparacao-body"></div>
+  </div>
+</div>
+
+<script>
+// Filtro local em tempo real (sem precisar submeter o form)
+function filtrarTabela(termo) {
+  const linhas = document.querySelectorAll('.linha-checklist');
+  const semResultados = document.getElementById('sem-resultados');
+  const tabela = document.getElementById('tabela-checklists');
+  const contador = document.getElementById('num-resultados');
+  const termoSpan = document.getElementById('termo-sem-resultado');
+
+  if (!termo || termo.trim() === '') {
+    linhas.forEach(l => l.style.display = '');
+    semResultados.style.display = 'none';
+    if (tabela) tabela.style.display = '';
+    if (contador) contador.textContent = linhas.length;
+    return;
+  }
+
+  const t = termo.trim().toLowerCase();
+  let visiveis = 0;
+
+  linhas.forEach(linha => {
+    const dados = linha.dataset.busca || '';
+    if (dados.includes(t)) {
+      linha.style.display = '';
+      // Destacar o texto encontrado na placa
+      visiveis++;
+    } else {
+      linha.style.display = 'none';
+    }
+  });
+
+  if (contador) contador.textContent = visiveis;
+
+  if (visiveis === 0) {
+    if (tabela) tabela.style.display = 'none';
+    if (termoSpan) termoSpan.textContent = termo;
+    semResultados.style.display = 'block';
+  } else {
+    if (tabela) tabela.style.display = '';
+    semResultados.style.display = 'none';
+  }
+}
+
+function limparBuscaLocal() {
+  const input = document.getElementById('input-busca');
+  input.value = '';
+  filtrarTabela('');
+  input.focus();
+}
+
+// Rodar filtro ao carregar (caso a página já venha com busca preenchida pelo server)
+document.addEventListener('DOMContentLoaded', () => {
+  const inputBusca = document.getElementById('input-busca');
+  const valorInicial = inputBusca ? inputBusca.value.trim() : '';
+  // Não refiltrar se veio do server (já filtrado no backend)
+  // Mas manter o campo focado se há busca
+  if (valorInicial) inputBusca.select();
+
+  // Enter no campo de busca faz submit
+  if (inputBusca) {
+    inputBusca.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('form-busca').submit();
+      }
+    });
+  }
+});
+</script>
+
+<%- include('../partials/footer') %>

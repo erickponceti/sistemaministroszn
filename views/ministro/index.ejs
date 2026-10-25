@@ -1,0 +1,178 @@
+<%- include('header') %>
+
+<!-- Stats -->
+<div class="stats-grid" style="margin-bottom:24px">
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fas fa-calendar-check"></i></div>
+    <div><div class="stat-number"><%= stats.total %></div><div class="stat-label">Total Escalas</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+    <div><div class="stat-number"><%= stats.confirmadas %></div><div class="stat-label">Confirmadas</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon orange"><i class="fas fa-clock"></i></div>
+    <div><div class="stat-number"><%= stats.pendentes %></div><div class="stat-label">Pendentes</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon teal"><i class="fas fa-church"></i></div>
+    <div><div class="stat-number"><%= igrejas.length %></div><div class="stat-label">Igrejas</div></div>
+  </div>
+</div>
+
+<div class="charts-grid">
+  <!-- Grafico escalas por mes -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-chart-bar" style="color:var(--primary)"></i> Minhas Escalas em <%= ano %></div>
+    </div>
+    <div style="position:relative;height:160px">
+      <canvas id="chartMes"></canvas>
+    </div>
+  </div>
+
+  <!-- Grafico por igleja -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-church" style="color:var(--accent-teal)"></i> Igrejas que Ministrei</div>
+    </div>
+    <% if (igrejas.length === 0) { %>
+      <div class="empty-state" style="padding:30px"><i class="fas fa-church"></i><p>Sem escalas ainda</p></div>
+    <% } else { %>
+    <div style="position:relative;height:160px">
+      <canvas id="chartIgreja"></canvas>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Proximas escalas -->
+<div class="card" style="margin-top:20px">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-calendar-alt" style="color:var(--primary)"></i> Proximas Escalas</div>
+  </div>
+  <% if (proximas.length === 0) { %>
+    <div class="empty-state" style="padding:30px"><i class="fas fa-calendar"></i><p>Nenhuma escala futura agendada</p></div>
+  <% } else { %>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr><th>Data</th><th>Turno</th><th>Igreja</th><th>Tema</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <% proximas.forEach(function(e) {
+          var d = new Date(e.data); d.setHours(12);
+          var ds = d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
+          var conf = e.confirmacao || 'pendente';
+        %>
+        <tr>
+          <td style="font-weight:700;white-space:nowrap"><%= ds %></td>
+          <td>
+            <% if(e.turno==='Manhã'){ %><span style="color:#f59e0b;font-weight:700;font-size:12px"><i class="fas fa-sun"></i> Manha</span>
+            <% }else if(e.turno==='Tarde'){ %><span style="color:#C2410C;font-weight:700;font-size:12px"><i class="fas fa-cloud-sun"></i> Tarde</span>
+            <% }else{ %><span style="color:#01539D;font-weight:700;font-size:12px"><i class="fas fa-moon"></i> Noite</span><% } %>
+          </td>
+          <td><strong><%= e.sigla %></strong> <span style="font-size:12px;color:var(--text-light)"><%= e.igreja_nome %></span></td>
+          <td style="font-size:13px;color:var(--text-mid)"><%= e.tema || '—' %></td>
+          <td>
+            <% var stAprov = e.status_aprovacao || 'pendente'; %>
+            <% if(stAprov==='rejeitado'){ %>
+              <span style="background:#fee2e2;color:#991b1b;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700"><i class="fas fa-ban"></i> Rejeitada</span>
+            <% }else if(stAprov==='pendente'){ %>
+              <span style="background:#f3f4f6;color:#6b7280;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700"><i class="fas fa-hourglass-half"></i> Aguard. Aprovação</span>
+            <% }else if(conf==='confirmado'){ %>
+              <span style="background:#d1fae5;color:#065f46;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700"><i class="fas fa-check-circle"></i> Confirmado</span>
+            <% }else if(conf==='recusado'){ %>
+              <span style="background:#fee2e2;color:#991b1b;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700"><i class="fas fa-times-circle"></i> Recusado</span>
+            <% }else{ %>
+              <span style="background:#fff3e0;color:#e65100;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700"><i class="fas fa-clock"></i> Aguard. Confirmação</span>
+            <% } %>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</div>
+
+<!-- Historico completo -->
+<div class="card" style="margin-top:20px">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-history" style="color:var(--accent-yellow)"></i> Historico de Escalas — <%= ano %></div>
+    <div style="display:flex;gap:8px">
+      <% for(var y=2024;y<=2027;y++){ %>
+        <a href="/ministro?ano=<%= y %>" class="btn btn-sm <%= ano===y?'btn-primary':'btn-outline' %>"><%= y %></a>
+      <% } %>
+    </div>
+  </div>
+  <% if (escalas.length === 0) { %>
+    <div class="empty-state" style="padding:30px"><i class="fas fa-calendar-times"></i><p>Sem escalas em <%= ano %></p></div>
+  <% } else { %>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr><th>Data</th><th>Turno</th><th>Igreja</th><th>Tema</th><th>Confirmacao</th></tr>
+      </thead>
+      <tbody>
+        <% escalas.forEach(function(e) {
+          var d = new Date(e.data); d.setHours(12);
+          var ds = d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+          var conf = e.confirmacao || 'pendente';
+          var isPast = new Date(e.data) < new Date();
+        %>
+        <tr style="<%= isPast ? 'opacity:.7' : '' %>">
+          <td style="font-weight:700"><%= ds %></td>
+          <td style="font-size:12px;font-weight:700;color:<%= e.turno==='Manhã'?'#f59e0b':e.turno==='Tarde'?'#C2410C':'#01539D' %>"><%= e.turno %></td>
+          <td><strong><%= e.sigla %></strong></td>
+          <td style="font-size:13px;color:var(--text-mid)"><%= e.tema || '—' %></td>
+          <td>
+            <% var stAprov = e.status_aprovacao || 'pendente'; %>
+            <% if(stAprov==='rejeitado'){ %><span style="color:#dc2626;font-size:12px;font-weight:700"><i class="fas fa-ban"></i> Rejeitada</span>
+            <% }else if(stAprov==='pendente'){ %><span style="color:#9ca3af;font-size:12px;font-weight:700"><i class="fas fa-hourglass-half"></i> Aguard. Aprovação</span>
+            <% }else if(conf==='confirmado'){ %><span style="color:#43a047;font-size:12px;font-weight:700"><i class="fas fa-check-circle"></i> Confirmado</span>
+            <% }else if(conf==='recusado'){ %><span style="color:#e53935;font-size:12px;font-weight:700"><i class="fas fa-times-circle"></i> Recusado</span>
+            <% }else{ %><span style="color:#f5a623;font-size:12px;font-weight:700"><i class="fas fa-clock"></i> Aguard. Confirmação</span><% } %>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+  <% } %>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+var MESES  = <%- JSON.stringify(MESES) %>;
+var porMes = <%- JSON.stringify(porMes) %>;
+var COLORS = ['#01539D','#4A7FB5','#2E86DE','#5A6B82','#9DBDE0','#2D3748','#4A6784','#B9D3EE'];
+
+new Chart(document.getElementById('chartMes'), {
+  type: 'bar',
+  data: {
+    labels: MESES,
+    datasets: [{ data: porMes, backgroundColor: '#01539Dcc', borderColor: '#01539D', borderWidth:1, borderRadius:5, barThickness:18 }]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false} },
+    scales:{ y:{beginAtZero:true,ticks:{stepSize:1}}, x:{grid:{display:false}} }
+  }
+});
+
+<% if (igrejas.length > 0) { %>
+var igrejaLabels = <%- JSON.stringify(igrejas.map(function(i){return i.sigla||i.nome;})) %>;
+var igrejaData   = <%- JSON.stringify(igrejas.map(function(i){return parseInt(i.total);})) %>;
+new Chart(document.getElementById('chartIgreja'), {
+  type: 'doughnut',
+  data: { labels: igrejaLabels, datasets: [{ data: igrejaData, backgroundColor: COLORS, borderWidth:2 }] },
+  options: {
+    responsive:true, maintainAspectRatio:false, cutout:'65%',
+    plugins:{ legend:{position:'right', labels:{font:{size:11},padding:8,boxWidth:12}} }
+  }
+});
+<% } %>
+</script>
+
+<%- include('footer') %>

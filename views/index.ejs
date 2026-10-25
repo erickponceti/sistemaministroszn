@@ -1,0 +1,307 @@
+<%- include('partials/header') %>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="fas fa-calendar-check"></i></div>
+    <div>
+      <div class="stat-number" id="total-agend">-</div>
+      <div class="stat-label">Agendamentos</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon teal"><i class="fas fa-church"></i></div>
+    <div>
+      <div class="stat-number" id="total-igrejas">-</div>
+      <div class="stat-label">Igrejas</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="fas fa-user-tie"></i></div>
+    <div>
+      <div class="stat-number" id="total-ministros">-</div>
+      <div class="stat-label">Ministros</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon orange"><i class="fas fa-star"></i></div>
+    <div>
+      <div class="stat-number" id="mes-atual">-</div>
+      <div class="stat-label">Este Mes</div>
+    </div>
+  </div>
+</div>
+
+<div class="charts-grid">
+
+  <!-- Agendamentos por Mes: container com altura fixa de 160px -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-chart-bar" style="color:var(--primary)"></i> Agendamentos por Mes - 2026</div>
+    </div>
+    <div style="position:relative; height:160px;">
+      <canvas id="chartMeses"></canvas>
+    </div>
+  </div>
+
+  <!-- Por Igreja Top 8 com numero central -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><i class="fas fa-chart-pie" style="color:var(--accent-teal)"></i> Por Igreja (Top 8)</div>
+    </div>
+    <div style="position:relative; height:220px;">
+      <canvas id="chartIgrejas"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<div class="card" style="margin-top:20px">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-trophy" style="color:var(--accent-yellow)"></i> Ministros Mais Escalados</div>
+  </div>
+  <div style="position:relative; height:180px;">
+    <canvas id="chartMinistros"></canvas>
+  </div>
+</div>
+
+<script>
+var MESES  = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+var COLORS = ['#01539D','#4A7FB5','#2E86DE','#5A6B82','#9DBDE0','#2D3748','#4A6784','#B9D3EE'];
+
+async function loadDashboard() {
+  var ano = new Date().getFullYear();
+
+  var igrejas, stats, ministros;
+  try {
+    var resIgrejas   = await fetch('/igrejas/api/lista');
+    var resStats     = await fetch('/agendamento/api/stats?ano=' + ano);
+    var resMinistros = await fetch('/ministros/api/lista');
+    if (resIgrejas.redirected || resStats.redirected || resMinistros.redirected) {
+      window.location.href = '/login'; return;
+    }
+    igrejas   = await resIgrejas.json();
+    stats     = await resStats.json();
+    ministros = await resMinistros.json();
+    if (!Array.isArray(igrejas) || !stats || !stats.porMes || !Array.isArray(ministros)) {
+      throw new Error((stats && stats.erro) || (igrejas && igrejas.erro) || 'resposta inesperada do servidor');
+    }
+  } catch (e) {
+    console.error('[dashboard]', e);
+    var box = document.createElement('div');
+    box.className = 'card';
+    box.style.cssText = 'margin-bottom:16px;border-left:4px solid #e53935;color:#b71c1c';
+    box.textContent = 'Nao foi possivel carregar os dados do painel: ' + e.message + '. Veja o terminal do servidor.';
+    document.querySelector('.stats-grid').before(box);
+    return;
+  }
+
+  document.getElementById('total-igrejas').textContent   = igrejas.length;
+  document.getElementById('total-ministros').textContent = ministros.length;
+
+  var totalAgend = stats.porMes.reduce(function(s,m){ return s + parseInt(m.total||0); }, 0);
+  document.getElementById('total-agend').textContent = totalAgend;
+
+  var mesHoje = new Date().getMonth() + 1;
+  var mesObj  = stats.porMes.find(function(m){ return parseInt(m.mes) === mesHoje; });
+  document.getElementById('mes-atual').textContent = mesObj ? mesObj.total : 0;
+
+  // ---- Grafico de barras: Agendamentos por Mes ----
+  var labMes  = MESES.slice();
+  var dataMes = labMes.map(function(_, i) {
+    var obj = stats.porMes.find(function(m){ return parseInt(m.mes) === i+1; });
+    return obj ? parseInt(obj.total) : 0;
+  });
+
+  new Chart(document.getElementById('chartMeses'), {
+    type: 'bar',
+    data: {
+      labels: labMes,
+      datasets: [{
+        data: dataMes,
+        backgroundColor: '#01539Dcc',
+        borderColor: '#01539D',
+        borderWidth: 1,
+        borderRadius: 5,
+        barThickness: 18,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: function(ctx){ return ' ' + ctx.parsed.y + ' agendamento(s)'; } } }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, maxTicksLimit: 5, font: { size: 11 } },
+          grid: { color: '#E6EDF5' }
+        },
+        x: {
+          ticks: { font: { size: 11 } },
+          grid: { display: false }
+        }
+      }
+    }
+  }, [{
+      id: 'barLabels',
+      afterDatasetDraw: function(chart) {
+        var ctx2 = chart.ctx;
+        var meta = chart.getDatasetMeta(0);
+        ctx2.save();
+        meta.data.forEach(function(bar, i) {
+          var val = chart.data.datasets[0].data[i];
+          if (!val || val === 0) return;
+          var x = bar.x;
+          var y = bar.y + (bar.base - bar.y) / 2;
+          ctx2.fillStyle    = '#fff';
+          ctx2.font         = 'bold 11px Nunito, sans-serif';
+          ctx2.textAlign    = 'center';
+          ctx2.textBaseline = 'middle';
+          ctx2.fillText(val, x, y);
+        });
+        ctx2.restore();
+      }
+    }]);
+
+  // ---- Grafico doughnut: Por Igreja ----
+  var labIgreja  = stats.porIgreja.slice(0,8).map(function(i){ return i.sigla || i.nome; });
+  var dataIgreja = stats.porIgreja.slice(0,8).map(function(i){ return parseInt(i.total||0); });
+  var totalIg    = dataIgreja.reduce(function(s,v){ return s+v; }, 0);
+
+  new Chart(document.getElementById('chartIgrejas'), {
+    type: 'doughnut',
+    data: {
+      labels: labIgreja,
+      datasets: [{ data: dataIgreja, backgroundColor: COLORS, borderWidth: 2 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '75%',
+      plugins: {
+        legend: { position: 'right', labels: { font: { size: 11 }, padding: 8, boxWidth: 12 } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              var pct = totalIg > 0 ? Math.round(ctx.parsed / totalIg * 100) : 0;
+              return ' ' + ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
+            }
+          }
+        }
+      }
+    },
+    plugins: [{
+      id: 'doughnutCenter',
+      afterDraw: function(chart) {
+        var ctx2  = chart.ctx;
+        var cx    = chart.chartArea ? (chart.chartArea.left + chart.chartArea.right) / 2 : chart.width / 2;
+        var cy    = chart.chartArea ? (chart.chartArea.top  + chart.chartArea.bottom) / 2 : chart.height / 2;
+        var total = chart.data.datasets[0].data.reduce(function(s,v){ return s + (parseInt(v)||0); }, 0);
+        ctx2.save();
+        // Number
+        ctx2.font         = 'bold 18px Nunito, sans-serif';
+        ctx2.fillStyle    = '#01539D';
+        ctx2.textAlign    = 'center';
+        ctx2.textBaseline = 'middle';
+        ctx2.fillText(total, cx, cy - 7);
+        // Label
+        ctx2.font         = 'bold 10px Nunito, sans-serif';
+        ctx2.fillStyle    = '#7A8699';
+        ctx2.fillText('total', cx, cy + 10);
+        ctx2.restore();
+        // Draw value on each slice
+        var meta = chart.getDatasetMeta(0);
+        meta.data.forEach(function(arc, i) {
+          var val = chart.data.datasets[0].data[i];
+          if (!val) return;
+          var mid = arc.startAngle + (arc.endAngle - arc.startAngle) / 2;
+          var r   = (arc.innerRadius + arc.outerRadius) / 2;
+          var x   = arc.x + Math.cos(mid) * r;
+          var y   = arc.y + Math.sin(mid) * r;
+          ctx2.save();
+          ctx2.fillStyle    = '#fff';
+          ctx2.font         = 'bold 11px Nunito, sans-serif';
+          ctx2.textAlign    = 'center';
+          ctx2.textBaseline = 'middle';
+          ctx2.fillText(val, x, y);
+          ctx2.restore();
+        });
+      }
+    }]
+  });
+
+  // ---- Grafico horizontal: Ministros mais escalados ----
+  var labMin  = stats.porMinistro.slice(0,8).map(function(m){ return m.nome; });
+  var dataMin = stats.porMinistro.slice(0,8).map(function(m){ return parseInt(m.total||0); });
+
+  new Chart(document.getElementById('chartMinistros'), {
+    type: 'bar',
+    data: {
+      labels: labMin,
+      datasets: [{
+        data: dataMin,
+        backgroundColor: COLORS.map(function(c){ return c + 'cc'; }),
+        borderRadius: 5,
+        barThickness: 16,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: '#E6EDF5' } },
+        y: { ticks: { font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+loadDashboard();
+</script>
+
+<!-- Ministros sem escala no ano -->
+<div class="card" style="margin-top:20px">
+  <div class="card-header">
+    <div class="card-title"><i class="fas fa-user-times" style="color:var(--primary)"></i> Ministros Sem Escala em <span id="ano-sem-escala"></span></div>
+  </div>
+  <div id="sem-escala-lista">
+    <div style="text-align:center;padding:20px;color:var(--text-light)"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>
+  </div>
+</div>
+
+<script>
+async function loadSemEscala() {
+  var ano = new Date().getFullYear();
+  document.getElementById('ano-sem-escala').textContent = ano;
+  try {
+    var r = await fetch('/ministros/api/sem-escala?ano=' + ano);
+    var lista = await r.json();
+    var el = document.getElementById('sem-escala-lista');
+    if (!lista.length) {
+      el.innerHTML = '<div style="text-align:center;padding:20px;color:#43a047"><i class="fas fa-check-circle"></i> Todos os ministros tiveram escala este ano!</div>';
+      return;
+    }
+    var html = '<div style="padding:4px 0"><div style="font-size:12px;color:var(--text-light);padding:8px 16px;font-weight:700">' + lista.length + ' ministro(s) sem nenhuma escala em ' + ano + '</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px">';
+    lista.forEach(function(m) {
+      html += '<div style="display:inline-flex;align-items:center;gap:8px;background:#F2F7FC;border:1px solid var(--primary-soft);border-radius:10px;padding:8px 12px">';
+      html += '<div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0">' + m.nome.charAt(0).toUpperCase() + '</div>';
+      html += '<div><div style="font-size:13px;font-weight:700;color:var(--text-dark)">' + m.nome + '</div>';
+      if (m.chamado) html += '<div style="font-size:11px;color:var(--text-light)">' + m.chamado + '</div>';
+      html += '</div></div>';
+    });
+    html += '</div></div>';
+    el.innerHTML = html;
+  } catch(e) {
+    document.getElementById('sem-escala-lista').innerHTML = '<div style="padding:16px;color:var(--text-light)">Nao foi possivel carregar.</div>';
+  }
+}
+loadSemEscala();
+</script>
+
+<%- include('partials/footer') %>
