@@ -8,7 +8,7 @@ const dbHost = (!process.env.DB_HOST || process.env.DB_HOST === 'localhost') ? '
 const pool = new Pool({
   host:     dbHost,
   port:     parseInt(process.env.DB_PORT) || 5432,
-  database: process.env.DB_NAME     || 'senseyou_db_',
+  database: process.env.DB_NAME     || 'smzn',
   user:     process.env.DB_USER     || 'postgres',
   password: process.env.DB_PASSWORD || '123456',
   connectionTimeoutMillis: 5000,

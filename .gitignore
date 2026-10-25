@@ -6,3 +6,5 @@ env.txt
 _backup*/
 {public/
 {public,src/
+*.sql.bak
+backup_*.sql
