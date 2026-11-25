@@ -102,7 +102,7 @@ CREATE DATABASE smzn;
 ```
 
 ### 3. Configurar o `.env`
-Crie um arquivo `.env` na raiz:
+Copie o `.env.example` para `.env` e preencha (exemplo para banco local):
 ```env
 PORT=3000
 DB_HOST=127.0.0.1
@@ -130,6 +130,29 @@ npm run dev      # desenvolvimento (nodemon)
 ```
 
 Acesse **http://localhost:3000**. No primeiro início o sistema cria as tabelas e os usuários padrão, que aparecem no terminal. **Troque essas senhas logo no primeiro acesso.**
+
+---
+
+## Publicação em servidor web (banco Neon)
+
+Em produção o sistema usa um banco PostgreSQL na nuvem ([Neon](https://neon.tech)). **As credenciais nunca vão para o GitHub**: elas são cadastradas nas *variáveis de ambiente* do serviço de hospedagem (Render, Railway, Vercel, VPS etc.).
+
+Variáveis a cadastrar no servidor:
+
+| Variável | Valor |
+|---|---|
+| `DATABASE_URL` | `postgresql://USUARIO:SENHA@HOST/BANCO?sslmode=verify-full` (copiada do painel do Neon) |
+| `SESSION_SECRET` | uma frase secreta longa |
+| `BASE_URL` | endereço público do sistema, ex.: `https://smzn.exemplo.com` |
+| `PORT` | normalmente definida pelo próprio provedor |
+
+Quando `DATABASE_URL` existe, o sistema conecta com SSL e ignora as variáveis `DB_*`. No primeiro início, as tabelas são criadas automaticamente no banco Neon.
+
+Para levar os dados do banco local para o Neon:
+```bash
+pg_dump -U postgres -d smzn --no-owner --no-acl -f smzn.sql
+psql "postgresql://USUARIO:SENHA@HOST/BANCO?sslmode=require" -f smzn.sql
+```
 
 ---
 

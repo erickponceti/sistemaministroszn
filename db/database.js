@@ -1,21 +1,38 @@
 require('dotenv').config();
 const { Pool } = require('pg');
 
+// Conexão com o banco:
+// - No servidor web (ex.: Neon), defina DATABASE_URL nas variáveis de ambiente do provedor.
+// - No computador local, use DB_HOST, DB_PORT, DB_NAME, DB_USER e DB_PASSWORD no .env.
+// Nenhuma senha deve ficar escrita no código (o código vai para o GitHub).
+const remoto = !!process.env.DATABASE_URL;
+
 // No Windows, 'localhost' tenta primeiro o IPv6 (::1); se o Postgres só escuta IPv4,
 // cada nova conexão perde ~2s antes de cair no 127.0.0.1. Forçamos IPv4.
 const dbHost = (!process.env.DB_HOST || process.env.DB_HOST === 'localhost') ? '127.0.0.1' : process.env.DB_HOST;
 
-const pool = new Pool({
-  host:     dbHost,
-  port:     parseInt(process.env.DB_PORT) || 5432,
-  database: process.env.DB_NAME     || 'smzn',
-  user:     process.env.DB_USER     || 'postgres',
-  password: process.env.DB_PASSWORD || '123456',
-  connectionTimeoutMillis: 5000,
+// SSL é obrigatório em bancos na nuvem (Neon). Pode ser forçado com DB_SSL=true.
+const usarSSL = remoto || process.env.DB_SSL === 'true' || /neon\.tech$/.test(dbHost);
+
+const conexao = remoto
+  ? { connectionString: process.env.DATABASE_URL }
+  : {
+      host:     dbHost,
+      port:     parseInt(process.env.DB_PORT) || 5432,
+      database: process.env.DB_NAME     || 'smzn',
+      user:     process.env.DB_USER     || 'postgres',
+      password: process.env.DB_PASSWORD || '',
+    };
+
+const pool = new Pool(Object.assign(conexao, {
+  ssl: usarSSL ? { rejectUnauthorized: true } : false,
+  // Bancos na nuvem podem levar alguns segundos para "acordar"
+  connectionTimeoutMillis: usarSSL ? 15000 : 5000,
   max: 10,
-  idleTimeoutMillis: 0,   // mantém conexões abertas (evita reconectar a cada clique)
+  // Local: mantém conexões abertas. Nuvem: fecha as ociosas (o Neon derruba conexões paradas)
+  idleTimeoutMillis: usarSSL ? 30000 : 0,
   keepAlive: true,
-});
+}));
 
 pool.on('error', function(err) {
   console.error('[Postgres] Erro na conexao do pool:', err.message);
